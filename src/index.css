@@ -1,0 +1,468 @@
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'SF Pro',
+    'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --bg-base: #f7f7f9;
+  --ink: #1c1c1e;
+  --ink-soft: rgba(28, 28, 30, 0.56);
+  --glass-fill: rgba(255, 255, 255, 0.32);
+  --glass-border: rgba(255, 255, 255, 0.65);
+  --glass-highlight: rgba(255, 255, 255, 0.95);
+  --glass-shadow: rgba(60, 64, 90, 0.14);
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-base);
+  color: var(--ink);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input {
+  font-family: inherit;
+}
+
+.app-shell {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ---------------- Background ---------------- */
+
+/* Near-white base with soft, low-opacity cool blue + lavender radial washes
+   — gentle depth, no visible "blob" shapes, nothing that competes with the
+   glass circles for attention. Static (no animation): the point is quiet
+   depth, not motion. */
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 900px 700px at 12% 8%, rgba(10, 132, 255, 0.07), transparent 60%),
+    radial-gradient(ellipse 800px 800px at 88% 10%, rgba(175, 110, 240, 0.055), transparent 62%),
+    radial-gradient(ellipse 1000px 800px at 50% 105%, rgba(90, 170, 250, 0.05), transparent 65%),
+    var(--bg-base);
+}
+
+/* ---------------- Glass utility ---------------- */
+
+.glass {
+  background: var(--glass-fill);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    0 8px 28px var(--glass-shadow);
+}
+
+/* ---------------- Top bar ---------------- */
+
+.top-bar {
+  position: fixed;
+  top: 20px;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 0 20px;
+  pointer-events: none;
+}
+
+.top-bar > * {
+  pointer-events: auto;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.brand-mark {
+  font-size: 18px;
+  background: linear-gradient(135deg, #0a84ff, #bf5af2);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 700;
+}
+
+/* ---------------- Search bar ---------------- */
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(440px, 60vw);
+  padding: 11px 16px;
+  border-radius: 999px;
+  transition: box-shadow 0.25s ease;
+}
+
+.search-bar:focus-within {
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    0 0 0 2px rgba(10, 132, 255, 0.55),
+    0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+.search-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--ink-soft);
+  flex-shrink: 0;
+}
+
+.search-bar input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.search-bar input::placeholder {
+  color: var(--ink-soft);
+}
+
+.search-count {
+  font-size: 12px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.search-clear {
+  background: rgba(0, 0, 0, 0.08);
+  border: none;
+  color: var(--ink);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.search-clear:hover {
+  background: rgba(0, 0, 0, 0.14);
+}
+
+/* ---------------- Honeycomb ---------------- */
+
+.honeycomb-viewport {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  cursor: grab;
+  touch-action: none;
+  overscroll-behavior: contain;
+}
+
+.honeycomb-viewport:active {
+  cursor: grabbing;
+}
+
+.honeycomb-world {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.fc-card {
+  position: absolute;
+  width: 116px;
+  height: 116px;
+  border-radius: 50%;
+  transform-origin: center center;
+  will-change: transform, opacity;
+  cursor: pointer;
+  transition: opacity 0.35s ease;
+}
+
+/* Composes .glass directly (same class the search bar and detail panel use)
+   plus a per-subject color wash below — the exact material the detail view
+   uses, just circular, not a separate recipe tuned to look similar. */
+.fc-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  overflow: hidden;
+}
+
+/* Same wash .detail-panel::before uses (radial-gradient at a corner, faded
+   via var(--cat-soft)), just adapted from a rectangular band to a circle. */
+.fc-ring::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 25% 20%, var(--cat-soft), transparent 65%);
+  pointer-events: none;
+}
+
+.fc-inner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  text-align: center;
+}
+
+.fc-title {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.fc-card.is-dimmed .fc-ring {
+  filter: grayscale(0.6);
+}
+
+.fc-card.is-peak {
+  cursor: pointer;
+}
+
+/* The hovered card reads as "lit" material, not "outlined" UI: a brighter
+   glass edge, a deeper internal color wash, and a soft diffuse glow (no hard
+   ring) bleeding out from behind it, plus a taller elevation shadow. All of
+   it soft-edged, so it stays a property of the glass rather than a border
+   drawn on top of it. */
+.fc-card.is-peak .fc-ring::before {
+  background: radial-gradient(circle at 25% 20%, var(--cat-soft), transparent 72%);
+}
+
+.fc-card.is-peak .fc-ring {
+  border-color: rgba(255, 255, 255, 0.85);
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    0 0 30px 6px var(--cat-soft),
+    0 20px 38px rgba(60, 64, 90, 0.26);
+}
+
+/* ---------------- Hint pill ---------------- */
+
+.hint-pill {
+  position: fixed;
+  bottom: 26px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  pointer-events: none;
+}
+
+.hint-hidden {
+  opacity: 0;
+  transform: translateX(-50%) translateY(8px);
+}
+
+/* ---------------- Detail overlay ---------------- */
+
+.detail-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(60, 64, 90, 0.28);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.detail-panel {
+  position: fixed;
+  overflow: hidden;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow-y: auto;
+}
+
+.detail-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 140px;
+  background: radial-gradient(ellipse at 20% 0%, var(--cat-soft), transparent 70%);
+  pointer-events: none;
+}
+
+.detail-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--ink);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.detail-close:hover {
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.detail-category {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--cat-color);
+}
+
+.detail-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+.detail-formula {
+  padding: 28px 20px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  overflow-x: auto;
+}
+
+.detail-section h3 {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-soft);
+}
+
+.detail-variables {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detail-variables li {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  font-size: 14px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.var-symbol {
+  font-weight: 700;
+  min-width: 74px;
+  color: var(--cat-color);
+}
+
+.var-meaning {
+  color: var(--ink-soft);
+}
+
+.detail-related {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.related-chip {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.related-chip:hover {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: var(--cat-color);
+}
+
+/* ---------------- Misc ---------------- */
+
+.katex-wrap .katex {
+  font-size: 1em;
+}
+
+@media (max-width: 640px) {
+  .top-bar {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .search-bar {
+    width: min(100%, 320px);
+  }
+  .hint-pill {
+    font-size: 11px;
+    padding: 8px 14px;
+    max-width: 90vw;
+    white-space: normal;
+    text-align: center;
+  }
+}
