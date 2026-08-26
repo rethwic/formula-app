@@ -18,7 +18,7 @@
 html,
 body,
 #root {
-  height: 100%;
+  min-height: 100%;
   margin: 0;
 }
 
@@ -26,7 +26,6 @@ body {
   font-family: var(--font-sans);
   background: var(--bg-base);
   color: var(--ink);
-  overflow: hidden;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -36,18 +35,20 @@ input {
   font-family: inherit;
 }
 
+a {
+  color: inherit;
+}
+
 .app-shell {
   position: relative;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
 }
 
 /* ---------------- Background ---------------- */
 
 /* Near-white base with soft, low-opacity cool blue + lavender radial washes
    — gentle depth, no visible "blob" shapes, nothing that competes with the
-   glass circles for attention. Static (no animation): the point is quiet
+   glass surfaces for attention. Static (no animation): the point is quiet
    depth, not motion. */
 .aurora {
   position: fixed;
@@ -72,55 +73,75 @@ input {
     0 8px 28px var(--glass-shadow);
 }
 
-/* ---------------- Top bar ---------------- */
+/* ---------------- Landing page ---------------- */
 
-.top-bar {
-  position: fixed;
-  top: 20px;
-  left: 0;
-  right: 0;
-  z-index: 20;
+.landing-page {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 44px;
+  padding: 80px 20px;
+}
+
+/* ---------------- Wordmark ---------------- */
+
+.wordmark {
+  display: flex;
+  gap: 10px;
+}
+
+.wm-letter-wrap {
+  animation: wm-float 4.5s ease-in-out infinite;
+}
+
+@keyframes wm-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wm-letter-wrap {
+    animation: none;
+  }
+}
+
+.wm-letter {
+  width: clamp(48px, 9vw, 84px);
+  height: clamp(60px, 11vw, 104px);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  padding: 0 20px;
-  pointer-events: none;
-}
-
-.top-bar > * {
-  pointer-events: auto;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border-radius: 999px;
-  font-weight: 600;
-  font-size: 15px;
-  letter-spacing: -0.01em;
-  white-space: nowrap;
-}
-
-.brand-mark {
-  font-size: 18px;
-  background: linear-gradient(135deg, #0a84ff, #bf5af2);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  font-size: clamp(30px, 6vw, 54px);
   font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  border-radius: 22px;
+  background: radial-gradient(circle at 30% 25%, var(--cat-soft), transparent 70%), var(--glass-fill);
+  will-change: transform;
 }
 
-/* ---------------- Search bar ---------------- */
+/* ---------------- Search ---------------- */
+
+.global-search {
+  position: relative;
+  width: min(480px, 90vw);
+}
 
 .search-bar {
   display: flex;
   align-items: center;
   gap: 10px;
-  width: min(440px, 60vw);
-  padding: 11px 16px;
+  width: 100%;
+  padding: 13px 18px;
   border-radius: 999px;
   transition: box-shadow 0.25s ease;
 }
@@ -128,8 +149,8 @@ input {
 .search-bar:focus-within {
   box-shadow:
     inset 0 1px 0 var(--glass-highlight),
-    0 0 0 2px rgba(10, 132, 255, 0.55),
-    0 8px 32px rgba(0, 0, 0, 0.35);
+    0 0 0 2px rgba(10, 132, 255, 0.5),
+    0 8px 28px var(--glass-shadow);
 }
 
 .search-icon {
@@ -153,12 +174,6 @@ input {
   color: var(--ink-soft);
 }
 
-.search-count {
-  font-size: 12px;
-  color: var(--ink-soft);
-  white-space: nowrap;
-}
-
 .search-clear {
   background: rgba(0, 0, 0, 0.08);
   border: none;
@@ -179,56 +194,256 @@ input {
   background: rgba(0, 0, 0, 0.14);
 }
 
-/* ---------------- Honeycomb ---------------- */
-
-.honeycomb-viewport {
+.search-results {
   position: absolute;
-  inset: 0;
-  z-index: 1;
-  cursor: grab;
-  touch-action: none;
-  overscroll-behavior: contain;
+  top: calc(100% + 10px);
+  left: 0;
+  right: 0;
+  border-radius: 22px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 360px;
+  overflow-y: auto;
+  z-index: 30;
 }
 
-.honeycomb-viewport:active {
-  cursor: grabbing;
+.search-empty {
+  padding: 18px;
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 14px;
 }
 
-.honeycomb-world {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 0;
-  height: 0;
-  transform-origin: 0 0;
-  will-change: transform;
-}
-
-.fc-card {
-  position: absolute;
-  width: 116px;
-  height: 116px;
-  border-radius: 50%;
-  transform-origin: center center;
-  will-change: transform, opacity;
+.search-result {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: none;
+  background: transparent;
   cursor: pointer;
-  transition: opacity 0.35s ease;
+  text-align: left;
+  transition: background 0.15s ease;
 }
 
-/* Composes .glass directly (same class the search bar and detail panel use)
-   plus a per-subject color wash below — the exact material the detail view
-   uses, just circular, not a separate recipe tuned to look similar. */
-.fc-ring {
+.search-result:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.search-result-formula {
+  flex-shrink: 0;
+  min-width: 64px;
+  display: flex;
+  justify-content: center;
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.search-result-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.search-result-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.search-result-category {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ---------------- Subject cards (landing) ---------------- */
+
+.subject-grid {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 900px;
+}
+
+.subject-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 230px;
+  padding: 24px;
+  border-radius: 24px;
+  text-decoration: none;
+  color: var(--ink);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.subject-card::before {
+  content: '';
   position: absolute;
   inset: 0;
-  border-radius: 50%;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
-  overflow: hidden;
+  background: radial-gradient(circle at 20% 15%, var(--cat-soft), transparent 65%);
+  pointer-events: none;
 }
 
-/* Same wash .detail-panel::before uses (radial-gradient at a corner, faded
-   via var(--cat-soft)), just adapted from a rectangular band to a circle. */
-.fc-ring::before {
+.subject-card:hover {
+  transform: translateY(-5px);
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    0 18px 34px rgba(60, 64, 90, 0.2);
+}
+
+.subject-card-name {
+  position: relative;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.subject-card-tagline {
+  position: relative;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.subject-card-count {
+  position: relative;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--cat-color);
+  margin-top: 10px;
+}
+
+/* ---------------- Subject page ---------------- */
+
+.subject-page {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 24px 100px;
+}
+
+.subject-page-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 48px;
+}
+
+.subject-page-home {
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.subject-switcher {
+  display: flex;
+  gap: 8px;
+}
+
+.subject-pill {
+  padding: 9px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  text-decoration: none;
+  background: rgba(0, 0, 0, 0.045);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.subject-pill:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.subject-pill-active {
+  color: #fff;
+  background: var(--cat-color);
+}
+
+.subject-pill-active:hover {
+  background: var(--cat-color);
+}
+
+.subject-page-search {
+  margin-left: auto;
+  width: min(300px, 100%);
+}
+
+.subject-page-title {
+  position: relative;
+  padding: 8px 0 28px;
+}
+
+.subject-page-title h1 {
+  margin: 0;
+  font-size: clamp(32px, 5vw, 44px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--cat-color);
+}
+
+.subject-page-title p {
+  margin: 6px 0 0;
+  color: var(--ink-soft);
+  font-size: 15px;
+}
+
+.category-section {
+  margin-bottom: 44px;
+}
+
+.category-heading {
+  font-size: 19px;
+  font-weight: 700;
+  margin: 0 0 16px;
+  padding-left: 14px;
+  border-left: 4px solid var(--cat-color);
+}
+
+.formula-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 14px;
+}
+
+/* ---------------- Formula grid card ---------------- */
+
+.fgc {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px 14px;
+  min-height: 118px;
+  border-radius: 20px;
+  border: 1px solid var(--glass-border);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.fgc::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -236,69 +451,25 @@ input {
   pointer-events: none;
 }
 
-.fc-inner {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  text-align: center;
-}
-
-.fc-title {
-  color: var(--ink);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
-}
-
-.fc-card.is-dimmed .fc-ring {
-  filter: grayscale(0.6);
-}
-
-.fc-card.is-peak {
-  cursor: pointer;
-}
-
-/* The hovered card reads as "lit" material, not "outlined" UI: a brighter
-   glass edge, a deeper internal color wash, and a soft diffuse glow (no hard
-   ring) bleeding out from behind it, plus a taller elevation shadow. All of
-   it soft-edged, so it stays a property of the glass rather than a border
-   drawn on top of it. */
-.fc-card.is-peak .fc-ring::before {
-  background: radial-gradient(circle at 25% 20%, var(--cat-soft), transparent 72%);
-}
-
-.fc-card.is-peak .fc-ring {
-  border-color: rgba(255, 255, 255, 0.85);
+.fgc:hover {
+  transform: translateY(-4px) scale(1.02);
   box-shadow:
     inset 0 1px 0 var(--glass-highlight),
-    0 0 30px 6px var(--cat-soft),
-    0 20px 38px rgba(60, 64, 90, 0.26);
+    0 16px 30px rgba(60, 64, 90, 0.2);
 }
 
-/* ---------------- Hint pill ---------------- */
+.fgc-formula {
+  position: relative;
+  color: var(--ink);
+  font-size: 16px;
+}
 
-.hint-pill {
-  position: fixed;
-  bottom: 26px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 15;
-  padding: 10px 20px;
-  border-radius: 999px;
-  font-size: 13px;
+.fgc-title {
+  position: relative;
+  font-size: 12px;
+  font-weight: 600;
   color: var(--ink-soft);
-  white-space: nowrap;
-  transition: opacity 0.5s ease, transform 0.5s ease;
-  pointer-events: none;
-}
-
-.hint-hidden {
-  opacity: 0;
-  transform: translateX(-50%) translateY(8px);
+  line-height: 1.3;
 }
 
 /* ---------------- Detail overlay ---------------- */
@@ -451,18 +622,16 @@ input {
 }
 
 @media (max-width: 640px) {
-  .top-bar {
+  .landing-page {
+    gap: 32px;
+    padding: 60px 16px;
+  }
+  .subject-page-header {
     flex-direction: column;
-    gap: 10px;
+    align-items: stretch;
   }
-  .search-bar {
-    width: min(100%, 320px);
-  }
-  .hint-pill {
-    font-size: 11px;
-    padding: 8px 14px;
-    max-width: 90vw;
-    white-space: normal;
-    text-align: center;
+  .subject-page-search {
+    margin-left: 0;
+    width: 100%;
   }
 }
