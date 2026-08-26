@@ -43,6 +43,11 @@ body {
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  /* Safety net: nothing on a subject page should ever need to scroll
+     sideways (that was the search-bar overflow bug above), so guard
+     against it outright rather than relying on every element individually
+     staying within bounds. */
+  overflow-x: hidden;
 }
 
 button,
@@ -122,6 +127,7 @@ a {
   flex-direction: column;
   align-items: center;
   gap: 14px;
+  width: min(480px, 90vw);
 }
 
 /* ---------------- Landing title ---------------- */
@@ -222,9 +228,15 @@ a {
 
 /* ---------------- Search ---------------- */
 
+/* Fills whatever width its container gives it, rather than imposing its
+   own — the container decides how much room search gets (landing page vs.
+   the narrower slot in a subject page's header). Previously this forced
+   480px regardless of container, which on subject pages overflowed past
+   the header's 300px search slot — the cut-off bar and the resulting
+   horizontal scrollbar were the same bug. */
 .global-search {
   position: relative;
-  width: min(480px, 90vw);
+  width: 100%;
 }
 
 /* The resting trigger: looks exactly like the old static search bar, but
@@ -245,6 +257,13 @@ a {
   color: var(--ink-soft);
   font-size: 15px;
   text-align: left;
+  /* In the narrower subject-page search slot, this text has no room to fit
+     on one line and was wrapping to two — inflating the whole bar's height
+     (and, since the expanded panel reuses that measured height, the
+     expanded bar too). Truncate instead of wrapping. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .search-icon {
@@ -269,7 +288,11 @@ a {
   border: none;
   outline: none;
   color: var(--ink);
-  font-size: 16px;
+  /* Matches .search-bar-placeholder exactly (font-size, padding, gap are
+     all identical between resting and expanded) so the panel's fixed
+     origin.height always exactly fits this content — no mismatch, no
+     stretched-looking pill. */
+  font-size: 15px;
 }
 
 .search-bar-inner input::placeholder {
@@ -474,14 +497,18 @@ a {
   gap: 8px;
 }
 
+/* Used for both <Link> (subject switcher) and <button> (category filter)
+   elements, so it resets button-specific UA styles too. */
 .subject-pill {
   padding: 9px 16px;
+  border: none;
   border-radius: 999px;
   font-size: 13px;
   font-weight: 600;
   color: var(--ink-soft);
   text-decoration: none;
   background: rgba(0, 0, 0, 0.045);
+  cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
@@ -500,7 +527,12 @@ a {
 
 .subject-page-search {
   margin-left: auto;
-  width: min(300px, 100%);
+  /* Explicit flex-basis + max-width rather than width: min(300px, 100%) —
+     as a flex item, that width's 100% branch resolved against the flex
+     container's leftover space rather than clamping the way a block
+     element would, letting the search bar grow far past 300px. */
+  flex: 0 1 300px;
+  max-width: 300px;
 }
 
 .subject-page-title {
@@ -514,6 +546,13 @@ a {
   font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--brand-color);
+}
+
+.category-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -8px 0 32px;
 }
 
 .subject-page-title p {
