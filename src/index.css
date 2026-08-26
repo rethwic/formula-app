@@ -75,43 +75,58 @@ a {
 
 /* ---------------- Landing page ---------------- */
 
-/* Full-viewport, non-scrolling stage: the wordmark is truly centered in the
-   middle of the screen, and search + subject cards live in a fixed bar
-   pinned to the bottom — the "iPhone home bar" placement that was asked
-   for, rather than a normal stacked, scrolling hero. */
 .landing-page {
   position: relative;
   z-index: 1;
-  height: 100vh;
-  overflow: hidden;
-}
-
-.landing-hero {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-.landing-hero .particle-text {
-  width: min(920px, 90vw);
-  height: clamp(160px, 26vh, 280px);
-  min-height: 0;
-}
-
-.landing-bottom-bar {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 2;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
-  padding: 20px 20px calc(24px + env(safe-area-inset-bottom, 0px));
+  justify-content: center;
+  gap: 44px;
+  padding: 80px 20px;
+}
+
+/* ---------------- Wordmark ---------------- */
+
+.wordmark {
+  display: flex;
+  gap: 10px;
+}
+
+.wm-letter-wrap {
+  animation: wm-float 4.5s ease-in-out infinite;
+}
+
+@keyframes wm-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wm-letter-wrap {
+    animation: none;
+  }
+}
+
+.wm-letter {
+  width: clamp(48px, 9vw, 84px);
+  height: clamp(60px, 11vw, 104px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(30px, 6vw, 54px);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  border-radius: 22px;
+  background: radial-gradient(circle at 30% 25%, var(--cat-soft), transparent 70%), var(--glass-fill);
+  will-change: transform;
 }
 
 /* ---------------- Search ---------------- */
@@ -254,10 +269,10 @@ a {
 
 .subject-grid {
   display: flex;
-  gap: 14px;
+  gap: 18px;
   flex-wrap: wrap;
   justify-content: center;
-  max-width: 760px;
+  max-width: 900px;
 }
 
 .subject-card {
@@ -265,10 +280,10 @@ a {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  width: 180px;
-  padding: 16px 18px;
-  border-radius: 20px;
+  gap: 6px;
+  width: 230px;
+  padding: 24px;
+  border-radius: 24px;
   text-decoration: none;
   color: var(--ink);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -291,24 +306,23 @@ a {
 
 .subject-card-name {
   position: relative;
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 700;
   letter-spacing: -0.01em;
 }
 
 .subject-card-tagline {
   position: relative;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--ink-soft);
-  line-height: 1.3;
 }
 
 .subject-card-count {
   position: relative;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--cat-color);
-  margin-top: 6px;
+  margin-top: 10px;
 }
 
 /* ---------------- Subject page ---------------- */
@@ -608,16 +622,9 @@ a {
 }
 
 @media (max-width: 640px) {
-  .landing-hero .particle-text {
-    height: clamp(120px, 22vh, 200px);
-  }
-  .landing-bottom-bar {
-    gap: 12px;
-    padding: 14px 14px calc(18px + env(safe-area-inset-bottom, 0px));
-  }
-  .subject-card {
-    width: 140px;
-    padding: 12px 14px;
+  .landing-page {
+    gap: 32px;
+    padding: 60px 16px;
   }
   .subject-page-header {
     flex-direction: column;
