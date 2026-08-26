@@ -1,6 +1,7 @@
 :root {
-  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'SF Pro',
-    'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Helvetica,
+    Arial, sans-serif;
+  --font-display: 'Space Grotesk', var(--font-sans);
   --bg-base: #f7f7f9;
   --ink: #1c1c1e;
   --ink-soft: rgba(28, 28, 30, 0.56);
@@ -8,6 +9,20 @@
   --glass-border: rgba(255, 255, 255, 0.65);
   --glass-highlight: rgba(255, 255, 255, 0.95);
   --glass-shadow: rgba(60, 64, 90, 0.14);
+
+  /* One color family for the entire site — a single indigo/blue accent, not
+     a palette-per-category. --brand-a/b/c form the title's gradient (light
+     blue easing through indigo into deep navy — depth, not a rainbow);
+     --brand-color/--brand-soft are the flat accent used everywhere else
+     (headings, hovers, focus rings, active states), so every "something
+     happens with color" moment in the app reads as the same brand. */
+  --brand-a: #60a5fa;
+  --brand-b: #4f46e5;
+  --brand-c: #312e81;
+  --brand-gradient: linear-gradient(90deg, var(--brand-a) 0%, var(--brand-b) 55%, var(--brand-c) 100%);
+  --brand-color: var(--brand-b);
+  --brand-soft: rgba(79, 70, 229, 0.14);
+
   color-scheme: light;
 }
 
@@ -46,18 +61,18 @@ a {
 
 /* ---------------- Background ---------------- */
 
-/* Near-white base with soft, low-opacity cool blue + lavender radial washes
-   — gentle depth, no visible "blob" shapes, nothing that competes with the
-   glass surfaces for attention. Static (no animation): the point is quiet
+/* Near-white base with a soft, low-opacity blue/indigo wash — one hue
+   family, not a multi-color blend — for gentle depth without competing
+   with the glass surfaces. Static (no animation): the point is quiet
    depth, not motion. */
 .aurora {
   position: fixed;
   inset: 0;
   z-index: 0;
   background:
-    radial-gradient(ellipse 900px 700px at 12% 8%, rgba(10, 132, 255, 0.07), transparent 60%),
-    radial-gradient(ellipse 800px 800px at 88% 10%, rgba(175, 110, 240, 0.055), transparent 62%),
-    radial-gradient(ellipse 1000px 800px at 50% 105%, rgba(90, 170, 250, 0.05), transparent 65%),
+    radial-gradient(ellipse 900px 700px at 12% 8%, rgba(79, 70, 229, 0.08), transparent 60%),
+    radial-gradient(ellipse 800px 800px at 88% 10%, rgba(96, 165, 250, 0.07), transparent 62%),
+    radial-gradient(ellipse 1000px 800px at 50% 105%, rgba(79, 70, 229, 0.06), transparent 65%),
     var(--bg-base);
 }
 
@@ -75,58 +90,134 @@ a {
 
 /* ---------------- Landing page ---------------- */
 
+/* The title owns the bulk of the screen; search + subject pills are anchored
+   near the bottom instead of forming a centered group with it. `pointer-
+   events: none` on the wrapper lets mouse-move reach the FloatingSymbols
+   layer underneath everywhere except the specific controls that opt back
+   in with `pointer-events: auto`. */
 .landing-page {
   position: relative;
   z-index: 1;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 44px;
-  padding: 80px 20px;
+  padding: 32px 20px 48px;
+  pointer-events: none;
 }
 
-/* ---------------- Wordmark ---------------- */
-
-.wordmark {
+.landing-hero {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
   display: flex;
-  gap: 10px;
+  align-items: center;
+  justify-content: center;
 }
 
-.wm-letter-wrap {
-  animation: wm-float 4.5s ease-in-out infinite;
+.landing-search-group {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
 }
 
-@keyframes wm-float {
+/* ---------------- Landing title ---------------- */
+
+/* No card, no backdrop — the title itself is the liquid material: the
+   gradient fill plus a bright top-edge highlight and a soft dark
+   underside (the text-shadow pair below) read as a glassy, glossy
+   surface. The edge glitch was specifically the per-pixel SVG ripple
+   filter tried earlier (warping individual pixels is inherently fragile
+   at large font sizes) — that's gone for good, but the glass sheen itself
+   was never the problem, so it stays. "Liquid" now comes from two
+   uniform, artifact-free transforms: a continuously flowing gradient
+   (color never sits still) and a very slight breathing scale — both
+   animate whole-element properties, so there's nothing left to deform at
+   the edges. */
+.landing-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(6rem, 21vw, 14rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 0.92;
+  background: var(--brand-gradient);
+  background-size: 220% 100%;
+  background-position: 0% 50%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55), 0 -1px 1px rgba(255, 255, 255, 0.35);
+  filter: drop-shadow(0 24px 48px rgba(79, 70, 229, 0.24));
+  cursor: default;
+  animation: landing-title-flow 10s ease-in-out infinite, landing-title-breathe 7s ease-in-out infinite;
+}
+
+@keyframes landing-title-flow {
   0%,
   100% {
-    transform: translateY(0);
+    background-position: 0% 50%;
   }
   50% {
-    transform: translateY(-6px);
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes landing-title-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.012);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .wm-letter-wrap {
+  .landing-title {
     animation: none;
   }
 }
 
-.wm-letter {
-  width: clamp(48px, 9vw, 84px);
-  height: clamp(60px, 11vw, 104px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: clamp(30px, 6vw, 54px);
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--ink);
-  border-radius: 22px;
-  background: radial-gradient(circle at 30% 25%, var(--cat-soft), transparent 70%), var(--glass-fill);
-  will-change: transform;
+@media (max-width: 640px) {
+  .landing-title {
+    font-size: clamp(3.75rem, 22vw, 6.5rem);
+  }
+}
+
+/* ---------------- Symbol grid (background) ---------------- */
+
+/* A "polka dot" texture where the dots are tiny math symbols — static and
+   quiet at rest, lighting up into a little spotlight cluster around the
+   cursor. Sits behind everything (z-index: 0) but still receives pointer
+   events, since .landing-page is pointer-events: none except where
+   individual controls opt back in. */
+.symbol-grid {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+.symbol-grid-dot {
+  position: absolute;
+  transform: translate(-50%, -50%) scale(1);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 11px;
+  color: rgb(146, 149, 166);
+  opacity: 0.14;
+  will-change: transform, opacity, color;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .symbol-grid {
+    pointer-events: none;
+  }
 }
 
 /* ---------------- Search ---------------- */
@@ -136,6 +227,9 @@ a {
   width: min(480px, 90vw);
 }
 
+/* The resting trigger: looks exactly like the old static search bar, but
+   it's a plain clickable div (no real input) — clicking it is what
+   physically expands the real bar into .search-expand-panel below. */
 .search-bar {
   display: flex;
   align-items: center;
@@ -143,14 +237,14 @@ a {
   width: 100%;
   padding: 13px 18px;
   border-radius: 999px;
-  transition: box-shadow 0.25s ease;
 }
 
-.search-bar:focus-within {
-  box-shadow:
-    inset 0 1px 0 var(--glass-highlight),
-    0 0 0 2px rgba(10, 132, 255, 0.5),
-    0 8px 28px var(--glass-shadow);
+.search-bar-placeholder {
+  flex: 1;
+  min-width: 0;
+  color: var(--ink-soft);
+  font-size: 15px;
+  text-align: left;
 }
 
 .search-icon {
@@ -160,17 +254,25 @@ a {
   flex-shrink: 0;
 }
 
-.search-bar input {
+/* The real input's row, inside the expanded panel. */
+.search-bar-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 18px;
+}
+
+.search-bar-inner input {
   flex: 1;
   min-width: 0;
   background: transparent;
   border: none;
   outline: none;
   color: var(--ink);
-  font-size: 15px;
+  font-size: 16px;
 }
 
-.search-bar input::placeholder {
+.search-bar-inner input::placeholder {
   color: var(--ink-soft);
 }
 
@@ -194,19 +296,56 @@ a {
   background: rgba(0, 0, 0, 0.14);
 }
 
-.search-results {
-  position: absolute;
-  top: calc(100% + 10px);
-  left: 0;
-  right: 0;
-  border-radius: 22px;
-  padding: 8px;
+/* A dim scrim behind the panel — click it (or Escape) to collapse the bar
+   back to where it started. */
+.search-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  background: rgba(60, 64, 90, 0.18);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* The bar itself physically travels from its resting position/size to
+   this fixed, centered, larger one (see GlobalSearch.tsx's initial/animate
+   rects) — not a separate panel appearing elsewhere. Results attach
+   directly below, inside the same block, once something's typed. */
+.search-expand-panel {
+  position: fixed;
+  z-index: 60;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    0 20px 48px rgba(60, 64, 90, 0.28);
+}
+
+/* A standalone card, not part of the search bar's own box — it has its own
+   position/size and animates independently, so a changing result count
+   only ever resizes this card, never the bar above it. */
+.search-results-card {
+  position: fixed;
+  z-index: 60;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  max-height: 360px;
+  padding: 8px;
+  border-radius: 22px;
+  max-height: min(50vh, 440px);
   overflow-y: auto;
-  z-index: 30;
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    0 20px 48px rgba(60, 64, 90, 0.28);
+  /* Scroll still works (wheel, trackpad, touch) — the track/thumb chrome is
+     just not drawn, per request. */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.search-results-card::-webkit-scrollbar {
+  display: none;
 }
 
 .search-empty {
@@ -263,66 +402,44 @@ a {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  color: var(--brand-color);
 }
 
-/* ---------------- Subject cards (landing) ---------------- */
+/* ---------------- Subject pills (landing) ---------------- */
 
 .subject-grid {
   display: flex;
-  gap: 18px;
+  gap: 12px;
   flex-wrap: wrap;
   justify-content: center;
-  max-width: 900px;
 }
 
 .subject-card {
   position: relative;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 230px;
-  padding: 24px;
-  border-radius: 24px;
+  padding: 13px 30px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 600;
   text-decoration: none;
   color: var(--ink);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
 .subject-card::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 20% 15%, var(--cat-soft), transparent 65%);
+  background: radial-gradient(circle at 25% 20%, var(--brand-soft), transparent 70%);
   pointer-events: none;
 }
 
 .subject-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-2px);
+  border-color: var(--brand-color);
   box-shadow:
     inset 0 1px 0 var(--glass-highlight),
-    0 18px 34px rgba(60, 64, 90, 0.2);
-}
-
-.subject-card-name {
-  position: relative;
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
-
-.subject-card-tagline {
-  position: relative;
-  font-size: 13px;
-  color: var(--ink-soft);
-}
-
-.subject-card-count {
-  position: relative;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--cat-color);
-  margin-top: 10px;
+    0 10px 22px rgba(60, 64, 90, 0.16);
 }
 
 /* ---------------- Subject page ---------------- */
@@ -374,11 +491,11 @@ a {
 
 .subject-pill-active {
   color: #fff;
-  background: var(--cat-color);
+  background: var(--brand-color);
 }
 
 .subject-pill-active:hover {
-  background: var(--cat-color);
+  background: var(--brand-color);
 }
 
 .subject-page-search {
@@ -396,7 +513,7 @@ a {
   font-size: clamp(32px, 5vw, 44px);
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: var(--cat-color);
+  color: var(--brand-color);
 }
 
 .subject-page-title p {
@@ -414,7 +531,7 @@ a {
   font-weight: 700;
   margin: 0 0 16px;
   padding-left: 14px;
-  border-left: 4px solid var(--cat-color);
+  border-left: 4px solid var(--brand-color);
 }
 
 .formula-grid {
@@ -447,7 +564,7 @@ a {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 25% 20%, var(--cat-soft), transparent 65%);
+  background: radial-gradient(circle at 25% 20%, var(--brand-soft), transparent 65%);
   pointer-events: none;
 }
 
@@ -500,7 +617,7 @@ a {
   left: 0;
   right: 0;
   height: 140px;
-  background: radial-gradient(ellipse at 20% 0%, var(--cat-soft), transparent 70%);
+  background: radial-gradient(ellipse at 20% 0%, var(--brand-soft), transparent 70%);
   pointer-events: none;
 }
 
@@ -531,7 +648,7 @@ a {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--cat-color);
+  color: var(--brand-color);
 }
 
 .detail-title {
@@ -585,7 +702,7 @@ a {
 .var-symbol {
   font-weight: 700;
   min-width: 74px;
-  color: var(--cat-color);
+  color: var(--brand-color);
 }
 
 .var-meaning {
@@ -612,7 +729,7 @@ a {
 
 .related-chip:hover {
   background: rgba(255, 255, 255, 0.85);
-  border-color: var(--cat-color);
+  border-color: var(--brand-color);
 }
 
 /* ---------------- Misc ---------------- */

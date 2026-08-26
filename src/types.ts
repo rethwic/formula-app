@@ -15,8 +15,6 @@ export interface Category {
   id: CategoryId;
   name: string;
   short: string;
-  color: string;
-  colorSoft: string;
 }
 
 export type SubjectId = 'math' | 'science' | 'tech';
@@ -25,8 +23,6 @@ export interface Subject {
   id: SubjectId;
   name: string;
   tagline: string;
-  color: string;
-  colorSoft: string;
   categories: CategoryId[];
 }
 

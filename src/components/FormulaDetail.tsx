@@ -69,7 +69,6 @@ export function FormulaDetail({ formula, originRect, onClose, onJump }: FormulaD
     <div className="detail-scrim" onClick={onClose}>
       <motion.div
         className="detail-panel glass"
-        style={{ '--cat-color': cat.color, '--cat-soft': cat.colorSoft } as React.CSSProperties}
         initial={initial}
         animate={{ ...target, opacity: 1 }}
         exit={exit}
@@ -105,15 +104,8 @@ export function FormulaDetail({ formula, originRect, onClose, onJump }: FormulaD
             <div className="detail-related">
               {relatedFormulas.map((f) => {
                 if (!f) return null;
-                const relCat = categoryMap[f.category];
                 return (
-                  <button
-                    key={f.id}
-                    type="button"
-                    className="related-chip"
-                    style={{ '--cat-color': relCat.color } as React.CSSProperties}
-                    onClick={() => onJump(f)}
-                  >
+                  <button key={f.id} type="button" className="related-chip" onClick={() => onJump(f)}>
                     {f.label}
                   </button>
                 );

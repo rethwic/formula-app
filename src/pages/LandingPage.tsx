@@ -1,18 +1,26 @@
-import { Wordmark } from '../components/Wordmark';
+import { SymbolGrid } from '../components/SymbolGrid';
 import { GlobalSearch } from '../components/GlobalSearch';
 import { SubjectCard } from '../components/SubjectCard';
 import { subjects } from '../data/subjects';
 
 export function LandingPage() {
   return (
-    <div className="landing-page">
-      <Wordmark />
-      <GlobalSearch />
-      <div className="subject-grid">
-        {subjects.map((s) => (
-          <SubjectCard key={s.id} subject={s} />
-        ))}
+    <>
+      <SymbolGrid />
+      <div className="landing-page">
+        <div className="landing-hero">
+          <h1 className="landing-title">Derive</h1>
+        </div>
+
+        <div className="landing-search-group">
+          <GlobalSearch />
+          <div className="subject-grid">
+            {subjects.map((s) => (
+              <SubjectCard key={s.id} subject={s} />
+            ))}
+          </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

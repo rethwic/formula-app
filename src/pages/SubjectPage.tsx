@@ -1,5 +1,4 @@
 import { Link, Navigate, useParams } from 'react-router-dom';
-import type { CSSProperties } from 'react';
 import { FormulaGridCard } from '../components/FormulaGridCard';
 import { GlobalSearch } from '../components/GlobalSearch';
 import { subjects, subjectMap } from '../data/subjects';
@@ -15,8 +14,6 @@ export function SubjectPage() {
   const subject = subjectId ? subjectMap[subjectId as SubjectId] : undefined;
   if (!subject) return <Navigate to="/" replace />;
 
-  const style = { '--cat-color': subject.color, '--cat-soft': subject.colorSoft } as CSSProperties;
-
   return (
     <div className="subject-page">
       <header className="subject-page-header">
@@ -29,7 +26,6 @@ export function SubjectPage() {
               key={s.id}
               to={`/${s.id}`}
               className={`subject-pill${s.id === subject.id ? ' subject-pill-active' : ''}`}
-              style={{ '--cat-color': s.color } as CSSProperties}
             >
               {s.name}
             </Link>
@@ -40,7 +36,7 @@ export function SubjectPage() {
         </div>
       </header>
 
-      <div className="subject-page-title" style={style}>
+      <div className="subject-page-title">
         <h1>{subject.name}</h1>
         <p>{subject.tagline}</p>
       </div>
@@ -51,9 +47,7 @@ export function SubjectPage() {
         if (items.length === 0) return null;
         return (
           <section key={categoryId} className="category-section">
-            <h2 className="category-heading" style={{ '--cat-color': cat.color } as CSSProperties}>
-              {cat.name}
-            </h2>
+            <h2 className="category-heading">{cat.name}</h2>
             <div className="formula-grid">
               {items.map((f) => (
                 <FormulaGridCard key={f.id} formula={f} onClick={openDetail} />
