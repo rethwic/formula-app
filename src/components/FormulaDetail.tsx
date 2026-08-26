@@ -4,12 +4,26 @@ import { Katex } from './Katex';
 import type { Formula } from '../types';
 import { categoryMap } from '../data/categories';
 import { formulas } from '../data/formulas';
+import { solveForUnknown } from '../lib/solve';
 
 interface FormulaDetailProps {
   formula: Formula;
   originRect: DOMRect | null;
   onClose: () => void;
   onJump: (formula: Formula) => void;
+}
+
+function initialCalcValues(formula: Formula): Record<string, string> {
+  const values: Record<string, string> = {};
+  formula.calc?.vars.forEach((v) => {
+    values[v.key] = v.defaultValue !== undefined ? String(v.defaultValue) : '';
+  });
+  return values;
+}
+
+function formatSolved(n: number): string {
+  if (n !== 0 && (Math.abs(n) < 1e-4 || Math.abs(n) >= 1e9)) return n.toExponential(4);
+  return String(Number(n.toPrecision(6)));
 }
 
 function panelTarget() {
@@ -29,6 +43,38 @@ function panelTarget() {
 export function FormulaDetail({ formula, originRect, onClose, onJump }: FormulaDetailProps) {
   const [target] = useState(panelTarget);
   const cat = categoryMap[formula.category];
+  const calc = formula.calc;
+
+  const [calcValues, setCalcValues] = useState<Record<string, string>>(() => initialCalcValues(formula));
+
+  useEffect(() => {
+    setCalcValues(initialCalcValues(formula));
+  }, [formula]);
+
+  const solved = useMemo(() => {
+    if (!calc) return null;
+    const blankKeys = calc.vars.filter((v) => calcValues[v.key]?.trim() === '').map((v) => v.key);
+    if (blankKeys.length !== 1) return null;
+    const unknownKey = blankKeys[0];
+    const known: Record<string, number> = {};
+    for (const v of calc.vars) {
+      if (v.key === unknownKey) continue;
+      const num = Number(calcValues[v.key]);
+      if (calcValues[v.key].trim() === '' || !Number.isFinite(num)) return null;
+      known[v.key] = num;
+    }
+    const result = solveForUnknown(calc.residual, known, unknownKey);
+    if (result === null) return null;
+    return { key: unknownKey, value: result };
+  }, [calc, calcValues]);
+
+  function handleCalcChange(key: string, raw: string) {
+    setCalcValues((prev) => ({ ...prev, [key]: raw }));
+  }
+
+  function handleResetCalc() {
+    setCalcValues(initialCalcValues(formula));
+  }
 
   const initial = originRect
     ? {
@@ -95,6 +141,37 @@ export function FormulaDetail({ formula, originRect, onClose, onJump }: FormulaD
                 </li>
               ))}
             </ul>
+          </div>
+        )}
+
+        {calc && (
+          <div className="detail-section">
+            <div className="calc-header">
+              <h3>Calculator</h3>
+              <button type="button" className="calc-reset" onClick={handleResetCalc}>
+                Reset
+              </button>
+            </div>
+            <p className="calc-hint">Leave exactly one field blank to solve for it.</p>
+            <div className="calc-grid">
+              {calc.vars.map((v) => {
+                const isSolved = solved?.key === v.key;
+                return (
+                  <label key={v.key} className={`calc-row${isSolved ? ' calc-row-solved' : ''}`}>
+                    <span className="calc-symbol">{v.symbol}</span>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      className="calc-input"
+                      value={isSolved ? formatSolved(solved.value) : calcValues[v.key] ?? ''}
+                      placeholder="—"
+                      readOnly={isSolved}
+                      onChange={(e) => handleCalcChange(v.key, e.target.value)}
+                    />
+                  </label>
+                );
+              })}
+            </div>
           </div>
         )}
 

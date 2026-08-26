@@ -26,6 +26,17 @@ export interface Subject {
   categories: CategoryId[];
 }
 
+export interface CalcVar {
+  key: string;
+  symbol: string;
+  defaultValue?: number;
+}
+
+export interface FormulaCalc {
+  vars: CalcVar[];
+  residual: (values: Record<string, number>) => number;
+}
+
 export interface Formula {
   id: string;
   category: CategoryId;
@@ -35,4 +46,5 @@ export interface Formula {
   variables: Variable[];
   related?: string[];
   keywords?: string[];
+  calc?: FormulaCalc;
 }

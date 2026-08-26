@@ -647,6 +647,14 @@ a {
   flex-direction: column;
   gap: 18px;
   overflow-y: auto;
+  /* Scroll still works (wheel, trackpad, touch) — the track/thumb chrome is
+     just not drawn, per request. */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.detail-panel::-webkit-scrollbar {
+  display: none;
 }
 
 .detail-panel::before {
@@ -708,6 +716,12 @@ a {
   justify-content: center;
   font-size: 22px;
   overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.detail-formula::-webkit-scrollbar {
+  display: none;
 }
 
 .detail-section h3 {
@@ -746,6 +760,89 @@ a {
 
 .var-meaning {
   color: var(--ink-soft);
+}
+
+.calc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.calc-header h3 {
+  margin: 0;
+}
+
+.calc-reset {
+  border: none;
+  background: none;
+  color: var(--brand-color);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.calc-reset:hover {
+  text-decoration: underline;
+}
+
+.calc-hint {
+  margin: -4px 0 12px;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.calc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.calc-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid transparent;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.calc-row-solved {
+  border-color: var(--brand-color);
+  background: var(--brand-soft);
+}
+
+.calc-symbol {
+  font-weight: 700;
+  color: var(--brand-color);
+  min-width: 52px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.calc-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 14px;
+  font-family: var(--font-sans);
+  color: var(--ink);
+}
+
+.calc-row-solved .calc-input {
+  background: transparent;
+  color: var(--brand-color);
+  font-weight: 700;
+}
+
+.calc-input:focus {
+  outline: 2px solid var(--brand-color);
+  outline-offset: -1px;
 }
 
 .detail-related {
