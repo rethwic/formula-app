@@ -37,6 +37,13 @@ export interface FormulaCalc {
   residual: (values: Record<string, number>) => number;
 }
 
+export interface FormulaVariant {
+  label: string;
+  latex: string;
+  variables: Variable[];
+  calc?: FormulaCalc;
+}
+
 export interface Formula {
   id: string;
   category: CategoryId;
@@ -47,4 +54,9 @@ export interface Formula {
   related?: string[];
   keywords?: string[];
   calc?: FormulaCalc;
+  // When present, the detail view renders one mini formula+variables+
+  // calculator block per variant instead of the top-level latex/variables/
+  // calc — used for cards that bundle several shapes under one topic (e.g.
+  // "Area Formulas": rectangle, circle, triangle, trapezoid).
+  variants?: FormulaVariant[];
 }

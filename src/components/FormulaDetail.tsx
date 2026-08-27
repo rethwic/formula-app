@@ -1,29 +1,17 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Katex } from './Katex';
+import { FormulaBox } from './FormulaBox';
+import { FormulaCalculator } from './FormulaCalculator';
+import { VariantPicker } from './VariantPicker';
 import type { Formula } from '../types';
 import { categoryMap } from '../data/categories';
 import { formulas } from '../data/formulas';
-import { solveForUnknown } from '../lib/solve';
 
 interface FormulaDetailProps {
   formula: Formula;
   originRect: DOMRect | null;
   onClose: () => void;
   onJump: (formula: Formula) => void;
-}
-
-function initialCalcValues(formula: Formula): Record<string, string> {
-  const values: Record<string, string> = {};
-  formula.calc?.vars.forEach((v) => {
-    values[v.key] = v.defaultValue !== undefined ? String(v.defaultValue) : '';
-  });
-  return values;
-}
-
-function formatSolved(n: number): string {
-  if (n !== 0 && (Math.abs(n) < 1e-4 || Math.abs(n) >= 1e9)) return n.toExponential(4);
-  return String(Number(n.toPrecision(6)));
 }
 
 function panelTarget() {
@@ -43,38 +31,24 @@ function panelTarget() {
 export function FormulaDetail({ formula, originRect, onClose, onJump }: FormulaDetailProps) {
   const [target] = useState(panelTarget);
   const cat = categoryMap[formula.category];
-  const calc = formula.calc;
+  const panelRef = useRef<HTMLDivElement>(null);
 
-  const [calcValues, setCalcValues] = useState<Record<string, string>>(() => initialCalcValues(formula));
-
+  // Jumping between related formulas re-renders this same panel instance in
+  // place (no remount, no exit/enter transition) — so without this, jumping
+  // away while scrolled down on a tall (calculator-equipped) formula would
+  // land the next formula's content at that same stale scroll offset.
   useEffect(() => {
-    setCalcValues(initialCalcValues(formula));
-  }, [formula]);
+    panelRef.current?.scrollTo({ top: 0 });
+  }, [formula.id]);
 
-  const solved = useMemo(() => {
-    if (!calc) return null;
-    const blankKeys = calc.vars.filter((v) => calcValues[v.key]?.trim() === '').map((v) => v.key);
-    if (blankKeys.length !== 1) return null;
-    const unknownKey = blankKeys[0];
-    const known: Record<string, number> = {};
-    for (const v of calc.vars) {
-      if (v.key === unknownKey) continue;
-      const num = Number(calcValues[v.key]);
-      if (calcValues[v.key].trim() === '' || !Number.isFinite(num)) return null;
-      known[v.key] = num;
-    }
-    const result = solveForUnknown(calc.residual, known, unknownKey);
-    if (result === null) return null;
-    return { key: unknownKey, value: result };
-  }, [calc, calcValues]);
-
-  function handleCalcChange(key: string, raw: string) {
-    setCalcValues((prev) => ({ ...prev, [key]: raw }));
-  }
-
-  function handleResetCalc() {
-    setCalcValues(initialCalcValues(formula));
-  }
+  // For a multi-shape card (e.g. "Area Formulas"), only one variant is shown
+  // at a time via the dropdown below, picked by index — reset back to the
+  // first shape whenever the panel switches to a different formula card.
+  const [variantIndex, setVariantIndex] = useState(0);
+  useEffect(() => {
+    setVariantIndex(0);
+  }, [formula.id]);
+  const activeVariant = formula.variants?.[variantIndex];
 
   const initial = originRect
     ? {
@@ -114,6 +88,7 @@ export function FormulaDetail({ formula, originRect, onClose, onJump }: FormulaD
   return (
     <div className="detail-scrim" onClick={onClose}>
       <motion.div
+        ref={panelRef}
         className="detail-panel glass"
         initial={initial}
         animate={{ ...target, opacity: 1 }}
@@ -126,53 +101,51 @@ export function FormulaDetail({ formula, originRect, onClose, onJump }: FormulaD
         </button>
         <span className="detail-category">{cat.name}</span>
         <h2 className="detail-title">{formula.title}</h2>
-        <div className="detail-formula">
-          <Katex math={formula.latex} block />
-        </div>
 
-        {formula.variables.length > 0 && (
-          <div className="detail-section">
-            <h3>Variables</h3>
-            <ul className="detail-variables">
-              {formula.variables.map((v) => (
-                <li key={v.symbol}>
-                  <span className="var-symbol">{v.symbol}</span>
-                  <span className="var-meaning">{v.meaning}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        {formula.variants && formula.variants.length > 0 && activeVariant ? (
+          <>
+            <VariantPicker variants={formula.variants} index={variantIndex} onChange={setVariantIndex} />
 
-        {calc && (
-          <div className="detail-section">
-            <div className="calc-header">
-              <h3>Calculator</h3>
-              <button type="button" className="calc-reset" onClick={handleResetCalc}>
-                Reset
-              </button>
-            </div>
-            <p className="calc-hint">Leave exactly one field blank to solve for it.</p>
-            <div className="calc-grid">
-              {calc.vars.map((v) => {
-                const isSolved = solved?.key === v.key;
-                return (
-                  <label key={v.key} className={`calc-row${isSolved ? ' calc-row-solved' : ''}`}>
-                    <span className="calc-symbol">{v.symbol}</span>
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      className="calc-input"
-                      value={isSolved ? formatSolved(solved.value) : calcValues[v.key] ?? ''}
-                      placeholder="—"
-                      readOnly={isSolved}
-                      onChange={(e) => handleCalcChange(v.key, e.target.value)}
-                    />
-                  </label>
-                );
-              })}
-            </div>
-          </div>
+            <FormulaBox key={`box-${formula.id}-${activeVariant.label}`} latex={activeVariant.latex} />
+
+            {activeVariant.variables.length > 0 && (
+              <div className="detail-section">
+                <h3>Variables</h3>
+                <ul className="detail-variables">
+                  {activeVariant.variables.map((v) => (
+                    <li key={v.symbol}>
+                      <span className="var-symbol">{v.symbol}</span>
+                      <span className="var-meaning">{v.meaning}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {activeVariant.calc && (
+              <FormulaCalculator key={`calc-${formula.id}-${activeVariant.label}`} calc={activeVariant.calc} />
+            )}
+          </>
+        ) : (
+          <>
+            <FormulaBox key={`box-${formula.id}`} latex={formula.latex} />
+
+            {formula.variables.length > 0 && (
+              <div className="detail-section">
+                <h3>Variables</h3>
+                <ul className="detail-variables">
+                  {formula.variables.map((v) => (
+                    <li key={v.symbol}>
+                      <span className="var-symbol">{v.symbol}</span>
+                      <span className="var-meaning">{v.meaning}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {formula.calc && <FormulaCalculator key={`calc-${formula.id}`} calc={formula.calc} />}
+          </>
         )}
 
         {relatedFormulas.length > 0 && (

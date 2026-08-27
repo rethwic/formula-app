@@ -715,13 +715,114 @@ a {
   align-items: center;
   justify-content: center;
   font-size: 22px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  overflow: hidden;
+  /* .detail-panel has a fixed height with overflow-y:auto for scrolling —
+     but that same overflow setting makes a flex child's automatic min-size
+     resolve to 0 (per spec) instead of its content size, so without this,
+     flex-shrink was free to squeeze this box shorter than the formula
+     actually needs whenever a tall card's total content overflowed the
+     panel, instead of just letting the panel scroll. */
+  flex-shrink: 0;
 }
 
-.detail-formula::-webkit-scrollbar {
-  display: none;
+.detail-formula-scale {
+  display: inline-block;
+  transform-origin: center;
+  white-space: nowrap;
+}
+
+.variant-picker {
+  position: relative;
+}
+
+.variant-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-radius: 14px;
+  /* Matches .detail-formula's recipe rather than the raw .glass utility:
+     this control sits nested inside an already-blurred .glass panel, so a
+     second backdrop-filter has nothing further to blur and reads as flat.
+     A frosted fill + inset highlight + its own drop shadow is what actually
+     reads as a distinct glass surface here. */
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    0 4px 14px rgba(60, 64, 90, 0.1);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.variant-trigger:hover {
+  border-color: var(--brand-color);
+  background-color: rgba(255, 255, 255, 0.75);
+}
+
+.variant-trigger:focus-visible {
+  outline: 2px solid var(--brand-color);
+  outline-offset: -1px;
+}
+
+.variant-chevron {
+  width: 12px;
+  height: 8px;
+  color: var(--brand-color);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.variant-trigger[aria-expanded='true'] .variant-chevron {
+  transform: rotate(180deg);
+}
+
+/* The popup itself is a real DOM element (unlike a native <select>'s
+   OS-rendered list, which ignores almost all CSS) — a floating .glass card
+   in the same style as the search results dropdown, so it actually blurs
+   and tints the panel content behind it. */
+.variant-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 5;
+  padding: 6px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    0 20px 48px rgba(60, 64, 90, 0.28);
+}
+
+.variant-option {
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.variant-option:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.variant-option-active {
+  color: var(--brand-color);
+  background: var(--brand-soft);
 }
 
 .detail-section h3 {

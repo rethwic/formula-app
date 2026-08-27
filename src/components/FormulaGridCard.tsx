@@ -13,9 +13,11 @@ export function FormulaGridCard({ formula, onClick }: FormulaGridCardProps) {
       className="fgc glass"
       onClick={(e) => onClick(formula, e.currentTarget.getBoundingClientRect())}
     >
-      <span className="fgc-formula">
-        <Katex math={formula.latex} />
-      </span>
+      {!formula.variants && (
+        <span className="fgc-formula">
+          <Katex math={formula.latex} />
+        </span>
+      )}
       <span className="fgc-title">{formula.title}</span>
     </button>
   );
