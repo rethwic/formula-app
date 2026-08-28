@@ -628,6 +628,48 @@ a {
   line-height: 1.3;
 }
 
+.fgc-add {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--brand-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.fgc-add svg {
+  width: 14px;
+  height: 14px;
+}
+
+.fgc:hover .fgc-add,
+.fgc-add:hover,
+.fgc-add:focus-visible {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.fgc-add:active {
+  transform: scale(0.88);
+}
+
+.fgc-add-done {
+  opacity: 1;
+  background: var(--brand-color);
+  color: #fff;
+  border-color: var(--brand-color);
+}
+
 /* ---------------- Detail overlay ---------------- */
 
 .detail-scrim {
@@ -967,6 +1009,346 @@ a {
 .related-chip:hover {
   background: rgba(255, 255, 255, 0.85);
   border-color: var(--brand-color);
+}
+
+/* ---------------- Workspace ---------------- */
+
+.landing-workspace-link {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 5;
+  pointer-events: auto;
+}
+
+.workspace-page {
+  position: relative;
+  z-index: 1;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* A slim hover strip along the left edge — the icons themselves live inside
+   it (not just a trigger next to it), so moving from the empty edge onto an
+   icon never leaves the hoverable area and closes the menu prematurely. */
+.workspace-edge-zone {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 96px;
+  z-index: 7;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 14px;
+  padding-left: 20px;
+}
+
+.workspace-edge-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+  cursor: pointer;
+  text-decoration: none;
+  /* Hidden off-screen until the edge zone opens — see
+     .workspace-edge-zone-open below. */
+  transform: translateX(-72px);
+  opacity: 0;
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease;
+}
+
+.workspace-edge-zone-open .workspace-edge-icon {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.workspace-edge-zone .workspace-edge-icon:nth-child(1) {
+  transition-delay: 0s;
+}
+.workspace-edge-zone .workspace-edge-icon:nth-child(2) {
+  transition-delay: 0.03s;
+}
+.workspace-edge-zone .workspace-edge-icon:nth-child(3) {
+  transition-delay: 0.06s;
+}
+.workspace-edge-zone .workspace-edge-icon:nth-child(4) {
+  transition-delay: 0.09s;
+}
+
+.workspace-edge-icon:hover {
+  border-color: var(--brand-color);
+  color: var(--brand-color);
+}
+
+.workspace-edge-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.workspace-resize-wrap {
+  position: relative;
+}
+
+.workspace-zoom-popover {
+  position: absolute;
+  top: calc(100% + 12px);
+  /* Left-aligned with the button rather than centered under it: the button
+     sits right at the screen's left edge by design, so a centered popover
+     of this width would always clip off-screen there regardless of window
+     size. */
+  left: 0;
+  width: 220px;
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 999px;
+  white-space: nowrap;
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    0 16px 36px rgba(60, 64, 90, 0.24);
+}
+
+/* An Apple-style slider: a thin pill track pre-filled up to the thumb in
+   the brand color, and a plain round white knob that lifts slightly under
+   the cursor — the same language as macOS/iOS volume and brightness
+   sliders, rather than the browser's default range input chrome. */
+.workspace-zoom-slider {
+  flex: 1;
+  appearance: none;
+  -webkit-appearance: none;
+  height: 18px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.workspace-zoom-slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--brand-color) var(--fill, 0%),
+    rgba(0, 0, 0, 0.1) var(--fill, 0%)
+  );
+}
+
+.workspace-zoom-slider::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.workspace-zoom-slider::-moz-range-progress {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--brand-color);
+}
+
+.workspace-zoom-slider::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -7px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 4px rgba(60, 64, 90, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.workspace-zoom-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 4px rgba(60, 64, 90, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.workspace-zoom-slider:hover::-webkit-slider-thumb,
+.workspace-zoom-slider:active::-webkit-slider-thumb {
+  transform: scale(1.15);
+  box-shadow: 0 2px 8px rgba(60, 64, 90, 0.45);
+}
+
+.workspace-zoom-slider:hover::-moz-range-thumb,
+.workspace-zoom-slider:active::-moz-range-thumb {
+  transform: scale(1.15);
+  box-shadow: 0 2px 8px rgba(60, 64, 90, 0.45);
+}
+
+.workspace-zoom-popover-label {
+  min-width: 40px;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+}
+
+.workspace-canvas {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  /* Dragging to pan is a mousedown-and-move gesture, which is exactly what
+     the browser's own text-selection also responds to — without this, every
+     pan drag also highlighted the empty-state hint text underneath it. */
+  user-select: none;
+}
+
+.workspace-canvas:active {
+  cursor: grabbing;
+}
+
+.workspace-world {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.workspace-grid {
+  position: absolute;
+  left: -6000px;
+  top: -6000px;
+  width: 12000px;
+  height: 12000px;
+  background-image: radial-gradient(rgba(79, 70, 229, 0.22) 1.5px, transparent 1.5px);
+  background-size: 28px 28px;
+  pointer-events: none;
+}
+
+.workspace-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 6px;
+  pointer-events: none;
+  color: var(--ink-soft);
+  /* A brief tip, not a permanent fixture: fully visible at first, then
+     fades out on its own. Re-mounting this element (e.g. clearing the
+     workspace back to empty later) restarts the animation from scratch. */
+  animation: workspace-hint-fade 6s ease forwards;
+}
+
+@keyframes workspace-hint-fade {
+  0%,
+  65% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.workspace-empty p {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.workspace-empty-hint {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+
+.workspace-card {
+  position: absolute;
+  width: 340px;
+  border-radius: 22px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.workspace-card-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 10px 12px 16px;
+  cursor: grab;
+  background: rgba(255, 255, 255, 0.35);
+  border-bottom: 1px solid var(--glass-border);
+  touch-action: none;
+  user-select: none;
+}
+
+.workspace-card-header:active {
+  cursor: grabbing;
+}
+
+.workspace-card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.workspace-card-close {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--ink);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.workspace-card-close:hover {
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.workspace-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  max-height: 60vh;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.workspace-card-body::-webkit-scrollbar {
+  display: none;
+}
+
+.workspace-card .detail-formula {
+  font-size: 18px;
+  padding: 20px 14px;
+}
+
+.workspace-card .calc-grid {
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
 }
 
 /* ---------------- Misc ---------------- */

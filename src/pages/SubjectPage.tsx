@@ -45,6 +45,9 @@ export function SubjectPage() {
               {s.name}
             </Link>
           ))}
+          <Link to="/workspace" className="subject-pill">
+            Workspace
+          </Link>
         </div>
         <div className="subject-page-search">
           <GlobalSearch />

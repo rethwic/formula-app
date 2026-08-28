@@ -3,8 +3,10 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { LandingPage } from './pages/LandingPage';
 import { SubjectPage } from './pages/SubjectPage';
+import { WorkspacePage } from './pages/WorkspacePage';
 import { FormulaDetail } from './components/FormulaDetail';
 import { DetailContext } from './context/DetailContext';
+import { WorkspaceProvider } from './context/WorkspaceContext';
 import type { Formula } from './types';
 
 interface DetailState {
@@ -19,27 +21,30 @@ function App() {
 
   return (
     <DetailContext.Provider value={{ openDetail }}>
-      <BrowserRouter>
-        <div className="app-shell">
-          <div className="aurora" aria-hidden="true" />
+      <WorkspaceProvider>
+        <BrowserRouter>
+          <div className="app-shell">
+            <div className="aurora" aria-hidden="true" />
 
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/:subjectId" element={<SubjectPage />} />
-          </Routes>
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/workspace" element={<WorkspacePage />} />
+              <Route path="/:subjectId" element={<SubjectPage />} />
+            </Routes>
 
-          <AnimatePresence>
-            {detail && (
-              <FormulaDetail
-                formula={detail.formula}
-                originRect={detail.rect}
-                onClose={() => setDetail(null)}
-                onJump={(formula) => setDetail({ formula, rect: null })}
-              />
-            )}
-          </AnimatePresence>
-        </div>
-      </BrowserRouter>
+            <AnimatePresence>
+              {detail && (
+                <FormulaDetail
+                  formula={detail.formula}
+                  originRect={detail.rect}
+                  onClose={() => setDetail(null)}
+                  onJump={(formula) => setDetail({ formula, rect: null })}
+                />
+              )}
+            </AnimatePresence>
+          </div>
+        </BrowserRouter>
+      </WorkspaceProvider>
     </DetailContext.Provider>
   );
 }
