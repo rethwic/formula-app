@@ -36,6 +36,14 @@ function loadState(): WorkspaceState {
     if (!raw) return DEFAULT_STATE;
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.cards)) return DEFAULT_STATE;
+    const view = parsed.view;
+    // A corrupted view (e.g. a stray NaN/Infinity that once slipped into
+    // state) would otherwise persist forever, silently breaking pan/zoom on
+    // every future load — falling back to the default view is safer than
+    // trusting whatever was last written.
+    if (!view || !Number.isFinite(view.x) || !Number.isFinite(view.y) || !Number.isFinite(view.scale)) {
+      return { ...DEFAULT_STATE, cards: parsed.cards };
+    }
     return parsed;
   } catch {
     return DEFAULT_STATE;

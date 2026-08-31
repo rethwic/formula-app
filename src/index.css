@@ -1052,7 +1052,11 @@ a {
   flex-shrink: 0;
   width: 48px;
   height: 48px;
-  border-radius: 50%;
+  /* A literal 24px rather than 50% — this is the exact radius the resize
+     button's shape-morph target (the zoom slider pill, also 48px tall)
+     uses too, so the shared layout animation between them only has to
+     tween width/position, not the radius itself. */
+  border-radius: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1094,102 +1098,109 @@ a {
   height: 20px;
 }
 
-.workspace-resize-wrap {
+/* The resize icon and the zoom slider are one and the same shape — a single
+   element whose width Framer Motion animates open (spring, so it "grows"
+   rather than snaps), not two separate elements crossfaded via a shared
+   layoutId. That approach was prone to visible jitter/distortion as the
+   icon and slider content stretched non-uniformly with the box; animating
+   width directly on one persistent element sidesteps it entirely. */
+.workspace-resize-shape {
   position: relative;
+  overflow: hidden;
 }
 
-.workspace-zoom-popover {
+.workspace-resize-icon-btn {
   position: absolute;
-  top: calc(100% + 12px);
-  /* Left-aligned with the button rather than centered under it: the button
-     sits right at the screen's left edge by design, so a centered popover
-     of this width would always clip off-screen there regardless of window
-     size. */
-  left: 0;
-  width: 220px;
-  z-index: 8;
+  inset: 0;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: 999px;
-  white-space: nowrap;
-  box-shadow:
-    inset 0 1px 0 var(--glass-highlight),
-    0 16px 36px rgba(60, 64, 90, 0.24);
-}
-
-/* An Apple-style slider: a thin pill track pre-filled up to the thumb in
-   the brand color, and a plain round white knob that lifts slightly under
-   the cursor — the same language as macOS/iOS volume and brightness
-   sliders, rather than the browser's default range input chrome. */
-.workspace-zoom-slider {
-  flex: 1;
-  appearance: none;
-  -webkit-appearance: none;
-  height: 18px;
-  background: transparent;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--ink);
   cursor: pointer;
 }
 
-.workspace-zoom-slider::-webkit-slider-runnable-track {
-  height: 4px;
-  border-radius: 999px;
-  background: linear-gradient(
-    to right,
-    var(--brand-color) var(--fill, 0%),
-    rgba(0, 0, 0, 0.1) var(--fill, 0%)
-  );
+.workspace-resize-icon-btn:hover {
+  color: var(--brand-color);
 }
 
-.workspace-zoom-slider::-moz-range-track {
+.workspace-resize-icon-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.workspace-zoom-slider-wrap {
+  position: absolute;
+  inset: 0;
+}
+
+.workspace-zoom-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  height: 100%;
+  padding: 0 16px;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+/* No thumb at all — the track itself is the control. Click or drag
+   anywhere on it and the filled portion grows to meet the pointer, which
+   reads as a single continuous gesture instead of "grab this dot." */
+.workspace-zoom-track {
+  position: relative;
+  flex: 1;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  touch-action: none;
+  outline: none;
+}
+
+/* Keyboard-only focus ring, scoped to the track itself rather than the
+   browser's default outline (which drew a box around the whole pill). */
+.workspace-zoom-track:focus-visible {
+  outline: 2px solid var(--brand-color);
+  outline-offset: 4px;
+  border-radius: 999px;
+}
+
+.workspace-zoom-track::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
   height: 4px;
+  transform: translateY(-50%);
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.1);
 }
 
-.workspace-zoom-slider::-moz-range-progress {
+.workspace-zoom-fill {
+  position: absolute;
+  left: 0;
+  top: 50%;
   height: 4px;
   border-radius: 999px;
   background: var(--brand-color);
+  transform: translateY(-50%);
+  box-shadow: 0 0 0 rgba(79, 70, 229, 0);
+  transition: box-shadow 0.15s ease;
 }
 
-.workspace-zoom-slider::-webkit-slider-thumb {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 18px;
-  height: 18px;
-  margin-top: -7px;
-  border-radius: 50%;
-  background: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 1px 4px rgba(60, 64, 90, 0.35);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+/* While actively dragging: a subtle glow along the fill, the closest thing
+   to a "handle" this slider has — it lives at the fill's own edge instead
+   of being a separate shape sitting on top of it. */
+.workspace-zoom-track-active .workspace-zoom-fill {
+  box-shadow: 0 0 6px rgba(79, 70, 229, 0.4);
 }
 
-.workspace-zoom-slider::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 1px 4px rgba(60, 64, 90, 0.35);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.workspace-zoom-slider:hover::-webkit-slider-thumb,
-.workspace-zoom-slider:active::-webkit-slider-thumb {
-  transform: scale(1.15);
-  box-shadow: 0 2px 8px rgba(60, 64, 90, 0.45);
-}
-
-.workspace-zoom-slider:hover::-moz-range-thumb,
-.workspace-zoom-slider:active::-moz-range-thumb {
-  transform: scale(1.15);
-  box-shadow: 0 2px 8px rgba(60, 64, 90, 0.45);
-}
-
-.workspace-zoom-popover-label {
+.workspace-zoom-percent {
   min-width: 40px;
   text-align: right;
   font-size: 13px;

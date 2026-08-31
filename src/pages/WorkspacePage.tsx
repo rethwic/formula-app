@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { WorkspaceCard } from '../components/WorkspaceCard';
 import { WorkspaceSearchLauncher } from '../components/WorkspaceSearchLauncher';
-import { WorkspaceZoomPopover } from '../components/WorkspaceZoomPopover';
+import { WorkspaceZoomSlider } from '../components/WorkspaceZoomSlider';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { formulas } from '../data/formulas';
 
@@ -129,10 +129,33 @@ export function WorkspacePage() {
   const [edgeOpen, setEdgeOpen] = useState(false);
   const [zoomPopoverOpen, setZoomPopoverOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const resizeShapeRef = useRef<HTMLDivElement>(null);
   const panRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null);
   const cardElsRef = useRef(new Map<string, HTMLDivElement>());
   const longPressTimerRef = useRef<number | null>(null);
   const longPressFiredRef = useRef(false);
+
+  // Closing the zoom slider by clicking elsewhere or pressing Escape — kept
+  // here rather than inside the slider component since the slider itself
+  // has no fixed lifetime of its own now (it's just one state of the
+  // resize shape, not a separately-mounted popover).
+  useEffect(() => {
+    if (!zoomPopoverOpen) return;
+    function onPointerDown(e: PointerEvent) {
+      if (resizeShapeRef.current && !resizeShapeRef.current.contains(e.target as Node)) {
+        setZoomPopoverOpen(false);
+      }
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setZoomPopoverOpen(false);
+    }
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [zoomPopoverOpen]);
 
   // view/panTo/zoomBy all get new identities on every context update (very
   // frequent — every pan/zoom tick), so closing over them directly would
@@ -275,28 +298,39 @@ export function WorkspacePage() {
           <HomeIcon />
         </Link>
         <WorkspaceSearchLauncher onSelect={addFormula} />
-        <div className="workspace-resize-wrap">
-          <button
+        <motion.div
+          ref={resizeShapeRef}
+          className="workspace-edge-icon workspace-resize-shape glass"
+          animate={{ width: zoomPopoverOpen ? 220 : 48 }}
+          transition={{ type: 'spring', stiffness: 280, damping: 30 }}
+        >
+          <motion.button
             type="button"
-            className="workspace-edge-icon glass"
+            className="workspace-resize-icon-btn"
+            animate={{ opacity: zoomPopoverOpen ? 0 : 1 }}
+            transition={{ duration: 0.15 }}
+            style={{ pointerEvents: zoomPopoverOpen ? 'none' : 'auto' }}
             aria-label={cards.length > 0 ? 'Fit view to pinned formulas' : 'Reset view'}
             onPointerDown={handleResizePointerDown}
             onPointerUp={handleResizePointerUp}
             onPointerLeave={cancelLongPressTimer}
           >
             <ResizeIcon />
-          </button>
+          </motion.button>
           <AnimatePresence>
             {zoomPopoverOpen && (
-              <WorkspaceZoomPopover
-                key="zoom-popover"
-                scale={view.scale}
-                onChange={handleResizeSlider}
-                onClose={() => setZoomPopoverOpen(false)}
-              />
+              <motion.div
+                key="zoom-slider"
+                className="workspace-zoom-slider-wrap"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1, transition: { delay: 0.12 } }}
+                exit={{ opacity: 0, transition: { duration: 0.08 } }}
+              >
+                <WorkspaceZoomSlider scale={view.scale} onChange={handleResizeSlider} />
+              </motion.div>
             )}
           </AnimatePresence>
-        </div>
+        </motion.div>
         {cards.length > 0 && (
           <button type="button" className="workspace-edge-icon glass" aria-label="Clear all" onClick={clearAll}>
             <ClearIcon />
