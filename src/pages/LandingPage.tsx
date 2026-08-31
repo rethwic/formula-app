@@ -8,9 +8,6 @@ export function LandingPage() {
   return (
     <>
       <SymbolGrid />
-      <Link to="/workspace" className="landing-workspace-link subject-page-home glass">
-        Workspace
-      </Link>
       <div className="landing-page">
         <div className="landing-hero">
           <h1 className="landing-title">Derive</h1>
@@ -22,6 +19,9 @@ export function LandingPage() {
             {subjects.map((s) => (
               <SubjectCard key={s.id} subject={s} />
             ))}
+            <Link to="/workspace" className="subject-card glass">
+              Workspace
+            </Link>
           </div>
         </div>
       </div>

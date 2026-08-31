@@ -4,6 +4,7 @@ import { AnimatePresence } from 'framer-motion';
 import { LandingPage } from './pages/LandingPage';
 import { SubjectPage } from './pages/SubjectPage';
 import { WorkspacePage } from './pages/WorkspacePage';
+import { CalculatorLauncher } from './components/CalculatorLauncher';
 import { FormulaDetail } from './components/FormulaDetail';
 import { DetailContext } from './context/DetailContext';
 import { WorkspaceProvider } from './context/WorkspaceContext';
@@ -31,6 +32,8 @@ function App() {
               <Route path="/workspace" element={<WorkspacePage />} />
               <Route path="/:subjectId" element={<SubjectPage />} />
             </Routes>
+
+            <CalculatorLauncher />
 
             <AnimatePresence>
               {detail && (
