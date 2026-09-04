@@ -1410,28 +1410,27 @@ a {
     0 32px 72px rgba(60, 64, 90, 0.28);
 }
 
-.calculator-panel-header {
+/* Lives inside the sidebar column now, not spanning the panel's full
+   width — the graph no longer has any bar running across its own top, only
+   the floating controls overlaid directly on it. Every icon here does
+   something (add a row, undo, redo), rather than spending the row on a
+   static title. */
+.calculator-sidebar-toolbar {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 18px 18px 14px 24px;
-  border-bottom: 1px solid var(--glass-border);
+  gap: 2px;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(28, 28, 30, 0.08);
 }
 
-.calculator-panel-title {
-  font-family: var(--font-display);
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--ink);
-}
-
-.calculator-panel-close {
+.calculator-toolbar-btn {
+  flex-shrink: 0;
   width: 32px;
   height: 32px;
-  border-radius: 50%;
+  border-radius: 8px;
   border: none;
-  background: rgba(0, 0, 0, 0.08);
+  background: transparent;
   color: var(--ink);
   font-size: 18px;
   cursor: pointer;
@@ -1440,8 +1439,25 @@ a {
   justify-content: center;
 }
 
-.calculator-panel-close:hover {
-  background: rgba(0, 0, 0, 0.14);
+.calculator-toolbar-btn:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--brand-color);
+}
+
+.calculator-toolbar-btn:disabled {
+  color: var(--ink-soft);
+  opacity: 0.35;
+  cursor: default;
+}
+
+.calculator-toolbar-btn svg {
+  width: 17px;
+  height: 17px;
+}
+
+.calculator-chevrons-flipped {
+  display: flex;
+  transform: rotate(180deg);
 }
 
 .calculator-panel-body {
@@ -1450,20 +1466,67 @@ a {
   display: flex;
 }
 
+/* The animated element (width springs to 0 to collapse) just clips —
+   the fixed-width inner div is what actually holds the padding/scroll, so
+   its content doesn't reflow or squish mid-animation, only gets clipped. */
 .calculator-expression-list {
-  width: 300px;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.calculator-sidebar-wrap {
+  height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  box-sizing: border-box;
+}
+
+.calculator-expression-list-inner {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   padding: 12px;
   overflow-y: auto;
-  border-right: 1px solid var(--glass-border);
+  box-sizing: border-box;
+}
+
+/* Sits between the expression list and the graph as a normal (non-
+   animated) flex item, so — unlike a button placed inside the collapsing
+   sidebar itself — it stays put and reachable at the panel's edge no
+   matter how narrow that sidebar currently is, including fully collapsed. */
+.calculator-sidebar-toggle {
+  flex-shrink: 0;
+  width: 16px;
+  align-self: stretch;
+  border: none;
+  /* --glass-border reads as basically invisible against this panel's pale
+     surface (see .calculator-expr-row above) — same fix here. */
+  border-right: 1px solid rgba(28, 28, 30, 0.08);
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calculator-sidebar-toggle:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--brand-color);
+}
+
+.calculator-sidebar-toggle svg {
+  width: 12px;
+  height: 12px;
 }
 
 .calculator-expr-row {
-  padding: 6px 4px;
-  border-radius: 10px;
+  padding: 10px 4px;
+  /* --glass-border is a bright highlight meant for a glass edge against a
+     colorful backdrop — nearly invisible here against the list's own pale
+     surface, so this needs an actual dark divider instead. */
+  border-bottom: 1px solid rgba(28, 28, 30, 0.08);
 }
 
 .calculator-expr-row-main {
@@ -1472,14 +1535,83 @@ a {
   gap: 8px;
 }
 
-.calculator-expr-dot {
+/* The row's index — colored in to match its curve once it's plotted.
+   Empty rows (the always-present trailing blank one, mainly) show it
+   faded until you actually click into the row, echoing Desmos' own list. */
+.calculator-expr-number {
   flex-shrink: 0;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.15);
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  background: rgba(0, 0, 0, 0.06);
+  transition: opacity 0.15s ease;
 }
 
+.calculator-expr-row-empty .calculator-expr-number {
+  opacity: 0.4;
+}
+
+.calculator-expr-row-empty:focus-within .calculator-expr-number {
+  opacity: 1;
+}
+
+.calculator-expr-number svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* "add slider: a b all" — offered whenever a row references a letter
+   that isn't x, y, or a known constant/function. */
+.calculator-expr-slider-suggest {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 2px 8px 30px;
+}
+
+.calculator-expr-slider-suggest-label {
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-right: 2px;
+}
+
+.calculator-expr-suggest-btn {
+  border: none;
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-sans, serif);
+  font-style: italic;
+  padding: 5px 12px;
+  cursor: pointer;
+}
+
+.calculator-expr-suggest-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.calculator-expr-suggest-btn-all {
+  background: var(--brand-color);
+  color: #fff;
+  font-style: normal;
+}
+
+.calculator-expr-suggest-btn-all:hover {
+  background: var(--brand-color);
+  opacity: 0.9;
+}
+
+/* A contentEditable div standing in for a text <input> — it needs the
+   single-line/no-wrap/no-outline behavior an input gets for free. */
 .calculator-expr-input {
   flex: 1;
   min-width: 0;
@@ -1490,6 +1622,101 @@ a {
   font-family: var(--font-sans);
   font-size: 15px;
   color: var(--ink);
+  white-space: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  outline: none;
+  scrollbar-width: none;
+}
+
+.calculator-expr-input::-webkit-scrollbar {
+  display: none;
+}
+
+/* Live superscript, entered by pressing "^" mid-expression. */
+.calc-sup {
+  font-size: 0.7em;
+  vertical-align: super;
+  line-height: 1;
+  /* Without this, Chrome paints a yellow "editable region" highlight on
+     nested contentEditable islands the moment they're focused. */
+  outline: none;
+  background: transparent;
+}
+
+/* Live stacked fraction, entered by pressing "/" — the numerator/
+   denominator spans are their own tiny editable islands within the
+   larger contentEditable field. */
+.calc-frac {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  vertical-align: middle;
+  margin: 0 3px;
+  font-size: 0.85em;
+  line-height: 1.3;
+}
+
+.calc-frac-num,
+.calc-frac-den {
+  display: block;
+  min-width: 10px;
+  padding: 0 3px;
+  text-align: center;
+  outline: none;
+  background: transparent;
+}
+
+.calc-frac-num {
+  border-bottom: 1.3px solid currentColor;
+}
+
+/* Live radical, entered by typing "sqrt"/"cbrt"/"nthroot" in full — the √
+   glyph plus an editable argument with a bar drawn over it (border-top)
+   standing in for the vinculum, and an optional small index for cube/nth
+   roots sitting in the radical's usual top-left notch. */
+.calc-radical {
+  display: inline-flex;
+  align-items: flex-end;
+  vertical-align: middle;
+  margin: 0 1px;
+}
+
+.calc-radical-index {
+  font-size: 0.65em;
+  margin-bottom: 0.5em;
+  margin-right: -1px;
+  min-width: 7px;
+  text-align: center;
+  outline: none;
+  background: transparent;
+}
+
+.calc-radical-index-fixed {
+  color: var(--ink-soft);
+}
+
+.calc-radical-symbol {
+  font-size: 1.05em;
+  line-height: 1;
+  /* The "√" glyph's own ink sits well short of its line box on every
+     platform font tested — its top-right tip lands visibly below and
+     left of where calc-radical-arg's border-top bar starts, reading as a
+     gap/missing corner where the hook should meet the vinculum. Nudging
+     the glyph up and right closes that gap so the two read as one
+     continuous stroke instead of two disconnected pieces. */
+  position: relative;
+  top: -0.32em;
+  margin-right: -0.08em;
+}
+
+.calc-radical-arg {
+  border-top: 1.3px solid currentColor;
+  padding: 1px 3px 0;
+  min-width: 10px;
+  text-align: center;
+  outline: none;
+  background: transparent;
 }
 
 .calculator-expr-input:focus {
@@ -1499,6 +1726,17 @@ a {
 
 .calculator-expr-input-error {
   border-bottom-color: rgba(199, 68, 64, 0.5);
+}
+
+/* The evaluated result of a plain-arithmetic row (no free variable to
+   plot) — shown inline instead of drawing a meaningless flat line. */
+.calculator-expr-result {
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .calculator-expr-delete {
@@ -1542,6 +1780,23 @@ a {
   font-size: 11px;
   color: var(--ink-soft);
   text-align: center;
+}
+
+.calculator-expr-slider-bound-error {
+  background: rgba(199, 68, 64, 0.12);
+  color: #c74440;
+  box-shadow: inset 0 0 0 1px rgba(199, 68, 64, 0.5);
+}
+
+.calculator-expr-slider-input:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.calculator-expr-slider-error {
+  padding: 0 2px 6px 18px;
+  font-size: 11px;
+  color: #c74440;
 }
 
 .calculator-expr-slider-input {
@@ -1604,24 +1859,6 @@ a {
   color: var(--ink-soft);
 }
 
-.calculator-add-row {
-  margin-top: 6px;
-  padding: 8px 10px;
-  border: none;
-  background: transparent;
-  border-radius: 8px;
-  color: var(--ink-soft);
-  font-size: 13px;
-  font-weight: 600;
-  text-align: left;
-  cursor: pointer;
-}
-
-.calculator-add-row:hover {
-  background: rgba(0, 0, 0, 0.05);
-  color: var(--ink);
-}
-
 .calculator-graph {
   position: relative;
   flex: 1;
@@ -1640,10 +1877,17 @@ a {
   cursor: grabbing;
 }
 
-.calculator-graph-home {
+.calculator-graph-controls {
   position: absolute;
   bottom: 16px;
   right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.calculator-graph-control-btn {
+  flex-shrink: 0;
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -1657,13 +1901,61 @@ a {
   box-shadow: 0 4px 14px rgba(60, 64, 90, 0.16);
 }
 
-.calculator-graph-home:hover {
+.calculator-graph-control-btn:hover {
   color: var(--brand-color);
 }
 
-.calculator-graph-home svg {
+.calculator-graph-control-btn svg {
   width: 16px;
   height: 16px;
+}
+
+/* Floats directly on the graph's own top-right corner — replaces the
+   panel-wide toolbar's close button now that no bar runs across the top
+   of the graph at all. */
+.calculator-graph-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--ink);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(60, 64, 90, 0.16);
+}
+
+.calculator-graph-close:hover {
+  color: var(--brand-color);
+}
+
+/* A point's coordinate readout — shown on hover, or permanently once the
+   point's been clicked. Positioned via left/top set imperatively to the
+   point's current screen position (recomputed on every pan/zoom), with the
+   transform here doing the fixed part: centered above the point itself,
+   never intercepting pointer events so it can't block clicking the dot
+   underneath it or dragging the canvas through it. */
+.calculator-graph-point-label {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 10px));
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1.5px solid;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--ink);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 4px 14px rgba(60, 64, 90, 0.16);
+  z-index: 5;
 }
 
 /* ---------------- Misc ---------------- */

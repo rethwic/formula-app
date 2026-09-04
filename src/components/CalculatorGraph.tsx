@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export interface GraphCurve {
   id: string;
@@ -16,9 +16,18 @@ export interface GraphVertical {
   x: number;
 }
 
+export interface GraphPoint {
+  id: string;
+  x: number;
+  y: number;
+  color: string;
+}
+
 interface CalculatorGraphProps {
   curves: GraphCurve[];
   verticals: GraphVertical[];
+  points: GraphPoint[];
+  onClose: () => void;
 }
 
 interface View {
@@ -32,6 +41,9 @@ const MIN_UNITS_PER_PX = 0.0004;
 const MAX_UNITS_PER_PX = 60;
 const DEFAULT_VIEW: View = { cx: 0, cy: 0, unitsPerPx: 0.045 };
 const FONT = '11px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
+const POINT_RADIUS = 4.5;
+const HIT_RADIUS = 12;
+const CLICK_MOVE_THRESHOLD = 5;
 
 function clamp(n: number, min: number, max: number) {
   return Math.min(max, Math.max(min, n));
@@ -52,6 +64,13 @@ function formatTick(value: number, step: number): string {
   return value.toFixed(decimals);
 }
 
+// Coordinate labels use a fixed, coarser precision than tick labels — an
+// x-intercept found by bisection carries a dozen meaningless digits of
+// float noise that a rounded-to-scale tick value never accumulates.
+function formatCoord(n: number): string {
+  return Number(n.toPrecision(5)).toString();
+}
+
 function draw(
   ctx: CanvasRenderingContext2D,
   cssW: number,
@@ -59,6 +78,7 @@ function draw(
   view: View,
   curves: GraphCurve[],
   verticals: GraphVertical[],
+  points: GraphPoint[],
 ) {
   ctx.clearRect(0, 0, cssW, cssH);
 
@@ -166,16 +186,40 @@ function draw(
     }
     ctx.stroke();
   }
+
+  // Points — intercepts and explicit "(x, y)" rows alike, drawn as a small
+  // filled dot in the owning curve/row's color with a light halo so it
+  // reads clearly against a same-colored curve passing right through it.
+  for (const p of points) {
+    const sx = toScreenX(p.x);
+    const sy = toScreenY(p.y);
+    if (sx < -20 || sx > cssW + 20 || sy < -20 || sy > cssH + 20) continue;
+    ctx.beginPath();
+    ctx.arc(sx, sy, POINT_RADIUS + 2, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(sx, sy, POINT_RADIUS, 0, Math.PI * 2);
+    ctx.fillStyle = p.color;
+    ctx.fill();
+  }
 }
 
-export function CalculatorGraph({ curves, verticals }: CalculatorGraphProps) {
+export function CalculatorGraph({ curves, verticals, points, onClose }: CalculatorGraphProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<View>({ ...DEFAULT_VIEW });
-  const dataRef = useRef({ curves, verticals });
-  dataRef.current = { curves, verticals };
-  const dragRef = useRef<{ startX: number; startY: number; origin: View } | null>(null);
+  const dataRef = useRef({ curves, verticals, points });
+  dataRef.current = { curves, verticals, points };
+  const dragRef = useRef<{ startX: number; startY: number; origin: View; hitId: string | null; moved: boolean } | null>(
+    null,
+  );
   const sizeRef = useRef({ w: 0, h: 0 });
+  const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set());
+  const pinnedIdsRef = useRef(pinnedIds);
+  pinnedIdsRef.current = pinnedIds;
+  const hoveredIdRef = useRef<string | null>(null);
+  const labelRefs = useRef(new Map<string, HTMLDivElement>());
 
   function redraw() {
     const canvas = canvasRef.current;
@@ -185,13 +229,64 @@ export function CalculatorGraph({ curves, verticals }: CalculatorGraphProps) {
     if (w === 0 || h === 0) return;
     const dpr = window.devicePixelRatio || 1;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    draw(ctx, w, h, viewRef.current, dataRef.current.curves, dataRef.current.verticals);
+    const { curves, verticals, points } = dataRef.current;
+    draw(ctx, w, h, viewRef.current, curves, verticals, points);
+    updateLabelPositions();
+  }
+
+  // Repositions (and shows/hides) every point's coordinate label. Labels
+  // are plain HTML overlays rather than canvas text — a canvas-drawn label
+  // can't easily wrap a rounded background or be individually shown/hidden
+  // without redrawing everything else, and there are at most a handful of
+  // these on screen at once. Called on every redraw (pan/zoom/data change)
+  // and, separately, on hover changes that don't otherwise touch the view.
+  function updateLabelPositions() {
+    const { w, h } = sizeRef.current;
+    const view = viewRef.current;
+    const toScreenX = (wx: number) => w / 2 + (wx - view.cx) / view.unitsPerPx;
+    const toScreenY = (wy: number) => h / 2 - (wy - view.cy) / view.unitsPerPx;
+    for (const p of dataRef.current.points) {
+      const el = labelRefs.current.get(p.id);
+      if (!el) continue;
+      const show = pinnedIdsRef.current.has(p.id) || hoveredIdRef.current === p.id;
+      if (!show) {
+        el.style.display = 'none';
+        continue;
+      }
+      const sx = toScreenX(p.x);
+      const sy = toScreenY(p.y);
+      el.style.display = sx < -60 || sx > w + 60 || sy < -40 || sy > h + 40 ? 'none' : 'block';
+      el.style.left = `${sx}px`;
+      el.style.top = `${sy}px`;
+    }
+  }
+
+  function hitTestPoint(sx: number, sy: number): string | null {
+    const { w, h } = sizeRef.current;
+    const view = viewRef.current;
+    const toScreenX = (wx: number) => w / 2 + (wx - view.cx) / view.unitsPerPx;
+    const toScreenY = (wy: number) => h / 2 - (wy - view.cy) / view.unitsPerPx;
+    let bestId: string | null = null;
+    let bestDist = HIT_RADIUS;
+    for (const p of dataRef.current.points) {
+      const d = Math.hypot(toScreenX(p.x) - sx, toScreenY(p.y) - sy);
+      if (d <= bestDist) {
+        bestDist = d;
+        bestId = p.id;
+      }
+    }
+    return bestId;
   }
 
   useEffect(() => {
     redraw();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [curves, verticals]);
+  }, [curves, verticals, points]);
+
+  useEffect(() => {
+    updateLabelPositions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pinnedIds, points]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -251,27 +346,65 @@ export function CalculatorGraph({ curves, verticals }: CalculatorGraphProps) {
       // browsers — harmless to skip, dragging still works via the regular
       // pointermove/pointerup below.
     }
-    dragRef.current = { startX: e.clientX, startY: e.clientY, origin: viewRef.current };
+    const rect = e.currentTarget.getBoundingClientRect();
+    const hitId = hitTestPoint(e.clientX - rect.left, e.clientY - rect.top);
+    dragRef.current = { startX: e.clientX, startY: e.clientY, origin: viewRef.current, hitId, moved: false };
   }
 
   function handlePointerMove(e: React.PointerEvent) {
     const drag = dragRef.current;
-    if (!drag) return;
-    const { unitsPerPx } = drag.origin;
-    viewRef.current = {
-      unitsPerPx,
-      cx: drag.origin.cx - (e.clientX - drag.startX) * unitsPerPx,
-      cy: drag.origin.cy + (e.clientY - drag.startY) * unitsPerPx,
-    };
-    redraw();
+    if (drag) {
+      const dist = Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY);
+      if (dist > CLICK_MOVE_THRESHOLD) drag.moved = true;
+      const { unitsPerPx } = drag.origin;
+      viewRef.current = {
+        unitsPerPx,
+        cx: drag.origin.cx - (e.clientX - drag.startX) * unitsPerPx,
+        cy: drag.origin.cy + (e.clientY - drag.startY) * unitsPerPx,
+      };
+      redraw();
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    const hitId = hitTestPoint(e.clientX - rect.left, e.clientY - rect.top);
+    if (hitId !== hoveredIdRef.current) {
+      hoveredIdRef.current = hitId;
+      updateLabelPositions();
+    }
   }
 
   function handlePointerUp() {
+    const drag = dragRef.current;
     dragRef.current = null;
+    if (!drag || drag.moved || !drag.hitId) return;
+    const id = drag.hitId;
+    setPinnedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function handlePointerLeave() {
+    dragRef.current = null;
+    if (hoveredIdRef.current !== null) {
+      hoveredIdRef.current = null;
+      updateLabelPositions();
+    }
   }
 
   function resetView() {
     viewRef.current = { ...DEFAULT_VIEW };
+    redraw();
+  }
+
+  // Zooms around the view's own center (rather than a pointer position,
+  // which these buttons don't have) — cx/cy stay put, only unitsPerPx
+  // scales, clamped to the same range the wheel handler respects.
+  function zoomBy(factor: number) {
+    const view = viewRef.current;
+    viewRef.current = { ...view, unitsPerPx: clamp(view.unitsPerPx / factor, MIN_UNITS_PER_PX, MAX_UNITS_PER_PX) };
     redraw();
   }
 
@@ -283,26 +416,64 @@ export function CalculatorGraph({ curves, verticals }: CalculatorGraphProps) {
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
-        onPointerLeave={handlePointerUp}
+        onPointerLeave={handlePointerLeave}
       />
-      <button type="button" className="calculator-graph-home" aria-label="Reset view" onClick={resetView}>
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path
-            d="M4 11.5L12 4l8 7.5"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M6 10v9a1 1 0 001 1h3v-6h4v6h3a1 1 0 001-1v-9"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+      {points.map((p) => (
+        <div
+          key={p.id}
+          ref={(el) => {
+            if (el) labelRefs.current.set(p.id, el);
+            else labelRefs.current.delete(p.id);
+          }}
+          className="calculator-graph-point-label"
+          style={{ display: 'none', borderColor: p.color }}
+        >
+          ({formatCoord(p.x)}, {formatCoord(p.y)})
+        </div>
+      ))}
+      <button type="button" className="calculator-graph-close" aria-label="Close calculator" onClick={onClose}>
+        ×
       </button>
+      <div className="calculator-graph-controls">
+        <button
+          type="button"
+          className="calculator-graph-control-btn"
+          aria-label="Zoom out"
+          onClick={() => zoomBy(1 / 1.35)}
+        >
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M5 12h14" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          className="calculator-graph-control-btn"
+          aria-label="Zoom in"
+          onClick={() => zoomBy(1.35)}
+        >
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+          </svg>
+        </button>
+        <button type="button" className="calculator-graph-control-btn" aria-label="Reset view" onClick={resetView}>
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M4 11.5L12 4l8 7.5"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M6 10v9a1 1 0 001 1h3v-6h4v6h3a1 1 0 001-1v-9"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+      </div>
     </div>
   );
 }
