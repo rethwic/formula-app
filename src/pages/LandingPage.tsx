@@ -23,6 +23,9 @@ export function LandingPage() {
               Workspace
             </Link>
           </div>
+          <Link to="/contact" className="landing-contact-link">
+            Have a recommendation? Get in touch →
+          </Link>
         </div>
       </div>
     </>

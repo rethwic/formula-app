@@ -584,6 +584,275 @@ a {
   gap: 14px;
 }
 
+/* ---------------- Contact page ---------------- */
+
+/* Deliberately its own narrow, centered composition rather than the
+   subject-page grid shell — this is a single focused form, not a browsable
+   category of content, and (per its one and only entry point, the landing
+   page's own quiet link) it isn't meant to feel like a sibling of
+   Math/Science/Workspace in the site's structure. */
+.contact-page {
+  position: relative;
+  z-index: 1;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 88px 24px 100px;
+}
+
+.contact-back {
+  position: fixed;
+  top: 24px;
+  left: 24px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.contact-hero {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.contact-hero-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 18px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: var(--brand-gradient);
+  box-shadow: 0 12px 26px rgba(79, 70, 229, 0.32);
+}
+
+.contact-hero-icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+.contact-hero h1 {
+  margin: 0 0 10px;
+  font-size: clamp(28px, 4vw, 36px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--brand-color);
+}
+
+.contact-hero p {
+  margin: 0 auto;
+  max-width: 46ch;
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 32px;
+  border-radius: 28px;
+}
+
+.contact-field-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.contact-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Only inside the horizontal name/email row does "220px" mean width — flex-
+   basis follows the flex CONTAINER's main axis, and .contact-field is also
+   used directly inside .contact-form's column layout (the topic group, the
+   message field), where the same rule would set a 220px height floor
+   instead and blow those out with dead space. */
+.contact-field-row > .contact-field {
+  flex: 1 1 200px;
+  /* A text input's default flex min-width is "auto", which resolves to its
+     own intrinsic preferred width (a plain <input> defaults toward ~20
+     characters) rather than the 200px basis above — that's what was
+     forcing a wrap even though two 200px fields plus the gap fit
+     comfortably. */
+  min-width: 0;
+}
+
+.contact-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.contact-field input,
+.contact-field textarea {
+  border: 1px solid rgba(28, 28, 30, 0.12);
+  border-radius: 12px;
+  padding: 11px 14px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.6);
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.contact-field input:focus,
+.contact-field textarea:focus {
+  border-color: var(--brand-color);
+  box-shadow: 0 0 0 3px var(--brand-soft);
+}
+
+.contact-field input::placeholder,
+.contact-field textarea::placeholder {
+  color: var(--ink-soft);
+}
+
+.contact-topic-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* A bigger, icon-led target than a plain text pill — this is the first
+   decision the form asks for, so it gets more visual weight than the
+   plain-text subject-pill convention used elsewhere in the site. */
+.contact-topic-btn {
+  flex: 1 1 140px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1.5px solid rgba(28, 28, 30, 0.1);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+
+.contact-topic-btn:hover {
+  border-color: var(--brand-color);
+  color: var(--ink);
+  transform: translateY(-1px);
+}
+
+.contact-topic-btn svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.contact-topic-btn-active,
+.contact-topic-btn-active:hover {
+  /* Not just a transparent-colored border: a solid border and a gradient
+     background paint as two separate layers, and at a rounded corner their
+     anti-aliasing doesn't quite line up — a thin seam traces the curve even
+     though the border itself is invisible. Removing the border outright
+     (rather than merely hiding its color) avoids that entirely; the ~3px
+     it changes the box by across two edges is not something a viewer
+     switching between tabs would ever notice. */
+  border: none;
+  color: #fff;
+  background: var(--brand-gradient);
+}
+
+.contact-submit-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.contact-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 13px 26px;
+  border: none;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--brand-gradient);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  box-shadow: 0 10px 22px rgba(79, 70, 229, 0.28);
+}
+
+.contact-submit svg {
+  width: 17px;
+  height: 17px;
+}
+
+.contact-submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.contact-submit:disabled {
+  opacity: 0.4;
+  cursor: default;
+  box-shadow: none;
+  transform: none;
+}
+
+.contact-submit-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  max-width: 48ch;
+}
+
+.contact-submit-hint svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  opacity: 0.8;
+}
+
+@media (max-width: 560px) {
+  .contact-page {
+    padding-top: 76px;
+  }
+  .contact-back {
+    top: 14px;
+    left: 14px;
+  }
+  .contact-form {
+    padding: 22px;
+  }
+}
+
+/* A quiet secondary link rather than a subject-card tile — a recommendation
+   isn't a content subject on par with Math/Science/Workspace, so it reads
+   better as a smaller, lower-emphasis invitation underneath the grid. */
+.landing-contact-link {
+  pointer-events: auto;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.landing-contact-link:hover {
+  color: var(--brand-color);
+}
+
 /* ---------------- Formula grid card ---------------- */
 
 .fgc {
