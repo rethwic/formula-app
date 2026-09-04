@@ -24,6 +24,11 @@ interface CalculatorPanelProps {
 const INTERCEPT_DOMAIN: [number, number] = [-60, 60];
 const INTERCEPT_STEPS = 1200;
 
+// Where two curves cross belongs to both of them equally, so it's marked
+// in the same neutral ink as everything else that isn't curve-specific
+// (axis labels, grid) rather than borrowing either curve's own color.
+const INTERSECTION_COLOR = '#1c1c1e';
+
 // A plain bisection root-finder over evenly-sampled brackets. The tricky
 // part isn't finding where the sign flips — it's telling a genuine
 // crossing apart from a jump discontinuity (tan(x)'s asymptotes flip sign
@@ -208,10 +213,11 @@ export function CalculatorPanel({ open, onClose }: CalculatorPanelProps) {
   }, [rows, results]);
 
   // Every point actually shown on the graph: an explicit "(x, y)" row
-  // plots exactly where it says, while each curve additionally contributes
-  // its y-intercept and however many x-intercepts turn up in the search
-  // domain — mirroring what a curve's "intercepts" question normally means
-  // without requiring the user to type them in by hand.
+  // plots exactly where it says, each curve additionally contributes its
+  // y-intercept and however many x-intercepts turn up in the search domain
+  // — mirroring what a curve's "intercepts" question normally means without
+  // requiring the user to type them in by hand — and every pair of curves
+  // contributes wherever they cross, the same way.
   const points = useMemo<GraphPoint[]>(() => {
     const out: GraphPoint[] = [];
     rows.forEach((row, i) => {
@@ -226,6 +232,22 @@ export function CalculatorPanel({ open, onClose }: CalculatorPanelProps) {
         out.push({ id: `${curve.id}-x-intercept-${idx}`, x, y: 0, color: curve.color });
       });
     });
+    // A curve paired against itself would find a "crossing" at every
+    // sample (evaluate(x) - evaluate(x) is identically zero), so distinct
+    // rows plotting the same curve twice is the one case worth not
+    // bothering with — everything else, findXIntercepts' own dedup handles.
+    for (let i = 0; i < curves.length; i++) {
+      for (let j = i + 1; j < curves.length; j++) {
+        const a = curves[i];
+        const b = curves[j];
+        findXIntercepts((x) => a.evaluate(x) - b.evaluate(x)).forEach((x, idx) => {
+          const y = a.evaluate(x);
+          if (Number.isFinite(y)) {
+            out.push({ id: `${a.id}-${b.id}-intersect-${idx}`, x, y, color: INTERSECTION_COLOR });
+          }
+        });
+      }
+    }
     return out;
   }, [rows, results, curves]);
 
